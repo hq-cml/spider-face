@@ -40,9 +40,11 @@ func (this *BaseController) Display(viewPath ...string) {
 	bytes, err := this.Render(viewPath...)
 
 	if err == nil {
+		fmt.Println("A----------")
 		this.response.Header("Content-Type", "text/html; charset=utf-8")
 		this.response.Body(bytes)
 	} else {
+		fmt.Println("B----------", err)
 		this.response.Header("Content-Type", "text/html; charset=utf-8")
 		this.response.Body([]byte(err.Error()))
 	}
@@ -57,7 +59,6 @@ func (this *BaseController) Render(viewPath ...string) ([]byte, error) {
 		view_name = viewPath[0]
 	}
 	return this.view.Render(view_name)
-	return nil, nil
 }
 
 func (this *BaseController) Cookie(name string) string {

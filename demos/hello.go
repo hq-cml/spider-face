@@ -30,7 +30,7 @@ func (hello *HelloController) GetRouter() map[string]interface{} {
 	}
 }
 
-var controllerMap = map[string]core.SpiderController{
+var controllerMap = map[string]core.SpiderController {
 	"hello": &HelloController{},
 }
 
