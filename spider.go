@@ -27,7 +27,7 @@ type Spider struct {
 	Config      *SpiderConfig
 }
 
-func NewSpider(sConfig *SpiderConfig) (*Spider, error) { /*{{{*/
+func NewSpider(sConfig *SpiderConfig, controllers map[string]core.SpiderController) (*Spider, error) {
 	if sConfig.BindAddr == "" {
 		return nil, errors.New("server Addr can't be empty...[ip:port]")
 	}
@@ -35,26 +35,24 @@ func NewSpider(sConfig *SpiderConfig) (*Spider, error) { /*{{{*/
 	//new Application
 	mux := core.NewHandlerMux()
 
-	server := &http.Server{
+	//注册控制器
+	mux.RegisterController(controllers)
+
+	server := &http.Server {
 		Addr: sConfig.BindAddr,
 		Handler: mux,
 	}
 
-	spd := &Spider{
+	spd := &Spider {
 		Config: sConfig,
 		MuxHander: mux,
 		HttpServer: server,
 	}
+
 	return spd, nil
 }
 
-
-func (spd *Spider) RegisterController(controllerMap map[string]core.SpiderController) {
-	mux := spd.MuxHander.(*core.SpiderHandlerMux)
-	mux.RegisterController(controllerMap)
-}
-
-func (spd *Spider) Run() { /*{{{*/
+func (spd *Spider) Run() {
 	//解析模板
 	core.CompileTpl(spd.Config.ViewPath)
 	//信号处理函数

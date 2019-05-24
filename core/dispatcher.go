@@ -8,14 +8,14 @@ import (
 )
 
 type Dispatcher struct {
-	before_dispatch string
-	after_dispatch  string
+	beforeDispatch string
+	afterDispatch  string
 }
 
 func NewDispatcher() *Dispatcher {
 	return &Dispatcher{
-		before_dispatch: "BeforeDispatch",
-		after_dispatch:  "AfterDispatch",
+		beforeDispatch: "BeforeDispatch",
+		afterDispatch:  "AfterDispatch",
 	}
 }
 
@@ -25,7 +25,7 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 	//router := srt.GetRouter()
 	response := NewResponse(w, request)
 
-	var controller_name string
+	var controllerName string
 	var actionName string
 	var matchParam map[string]string
 	var ok error
@@ -37,7 +37,7 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 	url := strings.TrimRight(request.Url(), "/")
 	fmt.Println("r.URL: ", url)
 	if url != "" { //有url
-		controller_name, actionName, matchParam, ok = srt.MatchRewrite(url, r.Method)
+		controllerName, actionName, matchParam, ok = srt.MatchRewrite(url, r.Method)
 		if ok != nil {
 			OutputStaticFile(response, request, url)
 			return
@@ -49,26 +49,26 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 		//}
 		actionName = strings.TrimSuffix(actionName, ACTION_SUFFIX)
 	} else if url == "" && request.Param(HTTP_METHOD_PARAM_NAME) == "" { //首页
-		controller_name = DEFAULT_CONTROLLER
+		controllerName = DEFAULT_CONTROLLER
 		actionName = DEFAULT_ACTION
 	} else if request.Param(HTTP_METHOD_PARAM_NAME) != "" {
-		controller_name, actionName = srt.ParseMethod(request.Param(HTTP_METHOD_PARAM_NAME))
+		controllerName, actionName = srt.ParseMethod(request.Param(HTTP_METHOD_PARAM_NAME))
 		actionName = strings.Title(strings.ToLower(actionName))
 	}
 
-	request.SetController(controller_name)
+	request.SetController(controllerName)
 	request.SetAction(actionName)
 
-	controller, err := srt.NewController(controller_name)
+	controller, err := srt.NewController(controllerName)
 	if err != nil {
-		//OutErrorHtml(response, request, http.StatusNotFound)
+		OutErrorHtml(response, request, http.StatusNotFound)
 		fmt.Println(err)
 		return
 	}
 
 	controllerHandler := controller.MethodByName(actionName + ACTION_SUFFIX)
 	if controllerHandler.IsValid() == false {
-		//OutErrorHtml(response, request, http.StatusNotFound)
+		OutErrorHtml(response, request, http.StatusNotFound)
 		fmt.Println(err)
 		return
 	}
@@ -85,30 +85,28 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 		return
 	}
 
-	request_handlers := make([]reflect.Value, 0)
-	//TODO
-	//if before_handler := controller.MethodByName(this.before_dispatch); before_handler.IsValid() == true {
-	//	request_handlers = append(request_handlers, before_handler)
-	//}
+	handlers := make([]reflect.Value, 0)
+	if beforeHandler := controller.MethodByName(this.beforeDispatch); beforeHandler.IsValid() == true {
+		handlers = append(handlers, beforeHandler)
+	}
 
-	request_handlers = append(request_handlers, controllerHandler)
-	//TODO
-	//if after_handler := controller.MethodByName(this.after_dispatch); after_handler.IsValid() == true {
-	//	request_handlers = append(request_handlers, after_handler)
-	//}
+	handlers = append(handlers, controllerHandler)
+	if afterHandler := controller.MethodByName(this.afterDispatch); afterHandler.IsValid() == true {
+		handlers = append(handlers, afterHandler)
+	}
 
 	//执行 Init()
-	init_result := initIandler.Call(initParams)
+	initResult := initIandler.Call(initParams)
 
-	if reflect.Indirect(init_result[0]).Bool() == false {
+	if reflect.Indirect(initResult[0]).Bool() == false {
 		//logger.ErrorLog("Method of \"Init\" in controller " + controller_name + " return false")
-		//OutErrorHtml(response, request, http.StatusInternalServerError)
+		OutErrorHtml(response, request, http.StatusInternalServerError)
 		return
 	}
 
 	requestParams := make([]reflect.Value, 0)
 	//Run : Init -> before_dispatch -> controller_handler -> after_dispatch
-	for _, v := range request_handlers {
+	for _, v := range handlers {
 		v.Call(requestParams)
 	}
 

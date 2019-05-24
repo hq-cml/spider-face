@@ -30,7 +30,7 @@ func (hello *HelloController) GetRouter() map[string]interface{} {
 	}
 }
 
-var controllerMap = map[string]core.SpiderController {
+var controllerMap = map[string]core.SpiderController{
 	"hello": &HelloController{},
 }
 
@@ -42,14 +42,12 @@ func main() {
 		ViewPath:        "/tmp/face/views",  //模板目录
 	}
 
-	spd, err := spider.NewSpider(sConfig)
+	//生成实例
+	spd, err := spider.NewSpider(sConfig, controllerMap)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	//注册控制器
-	spd.RegisterController(controllerMap)
 
 	//Run
 	spd.Run()

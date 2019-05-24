@@ -10,7 +10,7 @@ type SpiderHandlerMux struct {
 	Logger        SpiderLogger
 	dispatcher    *Dispatcher
 	router        *SpiderRouter
-	controllerMap     map[string]interface{}
+	controllerMap     map[string]reflect.Type
 }
 
 //create Application object
@@ -23,7 +23,7 @@ func NewHandlerMux() *SpiderHandlerMux {
 	//}
 
 	mux := &SpiderHandlerMux{
-		controllerMap: map[string]interface{}{},
+		controllerMap: map[string]reflect.Type{},
 	}
 
 	//init mime
@@ -46,6 +46,18 @@ func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderC
 			continue;
 		}
 
+		//var i interface{}
+		//var a interface{}
+		//a = 10
+		//i = &a
+		//
+		//fmt.Println(reflect.ValueOf(a))
+		//fmt.Println(reflect.ValueOf(i))
+		//
+		//fmt.Println(reflect.Indirect(reflect.ValueOf(a)))
+		//fmt.Println(reflect.Indirect(reflect.ValueOf(i)))
+
+		//拿到controller的真实reflect.Value值
 		controllerValue := reflect.Indirect(reflect.ValueOf(controller))
 		mux.controllerMap[name] = controllerValue.Type()
 
@@ -58,8 +70,8 @@ func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderC
 	}
 }
 
-func (this *SpiderHandlerMux) GetController(controller_name string) reflect.Type {
-	if c, ok := this.controllerMap[controller_name]; ok == false {
+func (this *SpiderHandlerMux) GetController(controllerName string) reflect.Type {
+	if c, ok := this.controllerMap[controllerName]; ok == false {
 		return nil
 	} else {
 		return c.(reflect.Type)

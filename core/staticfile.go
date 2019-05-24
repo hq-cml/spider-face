@@ -45,14 +45,15 @@ var ErrorPagesMap = map[int]string {
 	<!-- a padding to disable MSIE and Chrome friendly error page -->
 	`,
 }
+
 func OutputStaticFile(response *Response, request *Request, file string) {
 	filePath := DocRoot + file
 	fi, err := os.Stat(filePath)
 	if err != nil && os.IsNotExist(err) {
-		//OutErrorHtml(response, request, http.StatusNotFound)
+		OutErrorHtml(response, request, http.StatusNotFound)
 		return
 	} else if fi.IsDir() == true {
-		//OutErrorHtml(response, request, http.StatusForbidden)
+		OutErrorHtml(response, request, http.StatusForbidden)
 		return
 	}
 	//file_size := fi.Size()
