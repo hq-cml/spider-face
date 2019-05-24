@@ -34,7 +34,8 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 	//w.Header("Status", fmt.Sprintf("%d", http.StatusOK))
 	w.WriteHeader(http.StatusOK)
 
-	url := strings.TrimRight(r.URL.String(), "/")
+	url := strings.TrimRight(request.Url(), "/")
+	fmt.Println("r.URL: ", url)
 	if url != "" { //有url
 		controller_name, actionName, matchParam, ok = srt.MatchRewrite(url, r.Method)
 		if ok != nil {

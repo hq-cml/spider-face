@@ -18,7 +18,7 @@ func (hello *HelloController) HelloAction() {
 func (hello *HelloController) IndexAction() {
 	hello.Assign("nowtime", time.Now())
 	hello.Assign("title", "welcome to spider~")
-	//demo.Assign("id", demo.Param("id"))   //TODO
+	hello.Assign("id", hello.Param("id"))
 	hello.Display()
 }
 
