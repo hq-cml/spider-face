@@ -37,9 +37,9 @@ var controllerMap = map[string]core.SpiderController{
 func main() {
 	//server config
 	sConfig := &spider.SpiderConfig{
-		DocRoot:         "/tmp/face/www",    //静态文件目录
-		BindAddr:        ":9529",            //监听地址:端口
-		ViewPath:        "/tmp/face/views",  //模板目录
+		BindAddr:        ":9529",            											                  //监听地址:端口
+		DocRoot:         "/data/share/golang/src/github.com/hq-cml/spider-face/demos/helloworld/static",  //静态文件目录
+		ViewPath:        "/data/share/golang/src/github.com/hq-cml/spider-face/demos/helloworld/tpl",     //模板目录
 	}
 
 	//生成实例

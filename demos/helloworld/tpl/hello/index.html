@@ -1,0 +1,18 @@
+{{template "public/header" .}}
+
+<h1>:)</h1>
+<p>hello spider~</p>
+<br>
+<h1>
+    <img src="/img/logo.jpg">
+</h1>
+<h3>
+当前时间: {{date "Y/m/d H:i:s" .nowtime}}
+<br>
+传参: {{.id}}
+</h3>
+
+{{template "public/footer"}}
+
+
+

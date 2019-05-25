@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-var DocRoot = "/tmp/face/www/" //TODO
+var DocRoot = "/data/share/golang/src/github.com/hq-cml/spider-face/demos/helloworld/static" //TODO
 
 var ErrorPagesMap = map[int]string {
 	403 :
