@@ -4,36 +4,31 @@ import (
 	"net/http"
 	"errors"
 	"github.com/hq-cml/spider-face/core"
+	"fmt"
+	"github.com/hq-cml/spider-face/utils/helper"
 )
-
-type SpiderConfig struct {
-	DocRoot       string //web访问目录
-
-	BindAddr      string
-	Logger        core.SpiderLogger
-
-	ViewPath      string
-
-	//ReadTimeout   int
-	//WriteTimeout  int
-	//MaxHeaderByte int
-
-	//HttpErrorHtml map[int]string
-}
 
 type Spider struct {
 	HttpServer  *http.Server
 	MuxHander   http.Handler    //自定义的多路复用器, 替换原生DefaultServerMux, 本质上是一个Handler接口的实现
-	Config      *SpiderConfig
+	Config      *core.SpiderConfig
 }
 
-func NewSpider(sConfig *SpiderConfig, controllers map[string]core.SpiderController) (*Spider, error) {
+func NewSpider(sConfig *core.SpiderConfig, controllers map[string]core.SpiderController) (*Spider, error) {
 	if sConfig.BindAddr == "" {
 		return nil, errors.New("server Addr can't be empty...[ip:port]")
 	}
 
+	if sConfig.TplPath == "" {
+		sConfig.TplPath = fmt.Sprintf("%s/tpl", helper.GetCurrentDir())
+	}
+
+	if sConfig.StaticPath == "" {
+		sConfig.StaticPath = fmt.Sprintf("%s/static", helper.GetCurrentDir())
+	}
+
 	//new Application
-	mux := core.NewHandlerMux()
+	mux := core.NewHandlerMux(sConfig)
 
 	//注册控制器
 	mux.RegisterController(controllers)
@@ -54,7 +49,7 @@ func NewSpider(sConfig *SpiderConfig, controllers map[string]core.SpiderControll
 
 func (spd *Spider) Run() {
 	//解析模板
-	core.CompileTpl(spd.Config.ViewPath)
+	core.CompileTpl(spd.Config.TplPath)
 	//信号处理函数
 	//go srv.signalHandle()
 

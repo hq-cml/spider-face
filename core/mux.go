@@ -14,7 +14,7 @@ type SpiderHandlerMux struct {
 }
 
 //create Application object
-func NewHandlerMux() *SpiderHandlerMux {
+func NewHandlerMux(sConfig *SpiderConfig) *SpiderHandlerMux {
 	//TODO
 	//http_server_config.Root = strings.TrimRight(http_server_config.Root, "/")
 	//for err_code, err_file_name := range http_server_config.HttpErrorHtml {
@@ -22,6 +22,10 @@ func NewHandlerMux() *SpiderHandlerMux {
 	//	http_server_config.HttpErrorHtml[err_code] = err_html
 	//}
 
+	//全局配置
+	GlobalConf = sConfig
+
+	//生成mux
 	mux := &SpiderHandlerMux{
 		controllerMap: map[string]reflect.Type{},
 	}

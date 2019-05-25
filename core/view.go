@@ -1,6 +1,5 @@
 package core
 
-
 import (
 	"bytes"
 	"errors"
@@ -48,7 +47,7 @@ func (this *View) Assign(key interface{}, value interface{}) {
 
 func (this *View) Render(view_name string) ([]byte, error) {
 	if ViewRoot == "" {
-		return []byte(""), errors.New("ViewPath not set")
+		return []byte(""), errors.New("TplPath not set")
 	}
 	view_name = strings.ToLower(view_name)
 	//TODO

@@ -6,8 +6,6 @@ import (
 	"fmt"
 )
 
-var DocRoot = "/data/share/golang/src/github.com/hq-cml/spider-face/demos/helloworld/static" //TODO
-
 var ErrorPagesMap = map[int]string {
 	403 :
 	`<html>
@@ -47,7 +45,7 @@ var ErrorPagesMap = map[int]string {
 }
 
 func OutputStaticFile(response *Response, request *Request, file string) {
-	filePath := DocRoot + file
+	filePath := GlobalConf.StaticPath + file
 	fi, err := os.Stat(filePath)
 	if err != nil && os.IsNotExist(err) {
 		OutErrorHtml(response, request, http.StatusNotFound)
