@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//TODO 使用不够友好简单
 type HelloController struct {
 	core.BaseController
 }
@@ -41,7 +42,7 @@ func main() {
 	}
 
 	//生成实例
-	spd, err := spider.NewSpider(sConfig, controllerMap)
+	spd, err := spider.NewSpider(sConfig, controllerMap, nil)
 	if err != nil {
 		fmt.Println(err)
 		return

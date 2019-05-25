@@ -24,10 +24,10 @@ const (
 	SPIDER_LOG_LEVEL_FATAL
 )
 
-var spiderLog SpiderLog
+var DefaultLogger *SpiderLog
 
 func init() {
-	InitLog("", "debug")
+	DefaultLogger = NewLog("", "debug")
 }
 
 func getFileLenPrefix() string {
@@ -41,7 +41,7 @@ func getFileLenPrefix() string {
 	return fmt.Sprintf("[%s, %v] ", sFile, line)
 }
 
-func InitLog(path string, level string) {
+func NewLog(path string, level string) *SpiderLog {
 	var f *os.File
 	var err error
 	if path == "" { //如果没有文件路径，则用标准错误Stderr
@@ -66,20 +66,20 @@ func InitLog(path string, level string) {
 	case "fatal", "Fatal", "FATAL":
 		levelInt = SPIDER_LOG_LEVEL_FATAL
 	}
-	spiderLog = SpiderLog {
+	spiderLog := SpiderLog {
 		Logger:log.New(f, "", log.LstdFlags),
 		level: levelInt,
 	}
-	//spiderLog.Logger.SetFlags(log.Ldate | log.Lshortfile)
+	return &spiderLog
 }
 
-func Debugf(format string, v ...interface{}) {
+func (spiderLog *SpiderLog)Debugf(format string, v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_DEBUG {return}
 	prefix := fmt.Sprintf("[DEBUG]%v", getFileLenPrefix())
 	spiderLog.Printf(prefix + format, v...)
 }
 
-func Debugln(v ...interface{}) {
+func (spiderLog *SpiderLog)Debugln(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_DEBUG {return}
 	prefix := fmt.Sprintf("[DEBUG]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -87,7 +87,7 @@ func Debugln(v ...interface{}) {
 	spiderLog.Println(v1...)
 }
 
-func Debug(v ...interface{}) {
+func (spiderLog *SpiderLog)Debug(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_DEBUG {return}
 	prefix := fmt.Sprintf("[DEBUG]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -95,13 +95,13 @@ func Debug(v ...interface{}) {
 	spiderLog.Print(v1...)
 }
 
-func Infof(format string, v ...interface{}) {
+func (spiderLog *SpiderLog)Infof(format string, v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_INFO {return}
 	prefix := fmt.Sprintf("[ INFO]%v", getFileLenPrefix())
 	spiderLog.Printf(prefix + format, v...)
 }
 
-func Infoln(v ...interface{}) {
+func (spiderLog *SpiderLog)Infoln(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_INFO {return}
 	prefix := fmt.Sprintf("[ INFO]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -109,7 +109,7 @@ func Infoln(v ...interface{}) {
 	spiderLog.Println(v1...)
 }
 
-func Info(v ...interface{}) {
+func (spiderLog *SpiderLog)Info(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_INFO {return}
 	prefix := fmt.Sprintf("[ INFO]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -117,13 +117,13 @@ func Info(v ...interface{}) {
 	spiderLog.Print(v1...)
 }
 
-func Warnf(format string, v ...interface{}) {
+func (spiderLog *SpiderLog)Warnf(format string, v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_WARN {return}
 	prefix := fmt.Sprintf("[ WARN]%v", getFileLenPrefix())
 	spiderLog.Printf(prefix + format, v...)
 }
 
-func Warnln(v ...interface{}) {
+func (spiderLog *SpiderLog)Warnln(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_WARN {return}
 	prefix := fmt.Sprintf("[ WARN]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -131,7 +131,7 @@ func Warnln(v ...interface{}) {
 	spiderLog.Println(v1...)
 }
 
-func Warn(v ...interface{}) {
+func(spiderLog *SpiderLog) Warn(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_WARN {return}
 	prefix := fmt.Sprintf("[ WARN]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -140,13 +140,13 @@ func Warn(v ...interface{}) {
 }
 
 
-func Errf(format string, v ...interface{}) {
+func (spiderLog *SpiderLog)Errf(format string, v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_ERR {return}
 	prefix := fmt.Sprintf("[ERROR]%v", getFileLenPrefix())
 	spiderLog.Printf(prefix + format, v...)
 }
 
-func Errln(v ...interface{}) {
+func (spiderLog *SpiderLog)Errln(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_ERR {return}
 	prefix := fmt.Sprintf("[ERROR]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -154,7 +154,7 @@ func Errln(v ...interface{}) {
 	spiderLog.Println(v1...)
 }
 
-func Err(v ...interface{}) {
+func (spiderLog *SpiderLog)Err(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_ERR {return}
 	prefix := fmt.Sprintf("[ERROR]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -162,14 +162,14 @@ func Err(v ...interface{}) {
 	spiderLog.Print(v1...)
 }
 
-func Fatalf(format string, v ...interface{}) {
+func (spiderLog *SpiderLog)Fatalf(format string, v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_FATAL {return}
 	prefix := fmt.Sprintf("[FATAL]%v", getFileLenPrefix())
 	spiderLog.Fatalf(prefix + format, v...)
 
 }
 
-func Fatalln(v ...interface{}) {
+func (spiderLog *SpiderLog)Fatalln(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_FATAL {return}
 	prefix := fmt.Sprintf("[FATAL]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}
@@ -177,7 +177,7 @@ func Fatalln(v ...interface{}) {
 	spiderLog.Fatalln(v1...)
 }
 
-func Fatal(v ...interface{}) {
+func (spiderLog *SpiderLog)Fatal(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_FATAL {return}
 	prefix := fmt.Sprintf("[FATAL]%v", getFileLenPrefix())
 	v1 := []interface{}{prefix}

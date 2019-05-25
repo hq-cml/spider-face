@@ -7,14 +7,14 @@ import (
 
 //Spider的http多路复用器
 type SpiderHandlerMux struct {
-	Logger        SpiderLogger
+	logger        SpiderLogger
 	dispatcher    *Dispatcher
 	router        *SpiderRouter
 	controllerMap     map[string]reflect.Type
 }
 
 //create Application object
-func NewHandlerMux(sConfig *SpiderConfig) *SpiderHandlerMux {
+func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger) *SpiderHandlerMux {
 	//TODO
 	//http_server_config.Root = strings.TrimRight(http_server_config.Root, "/")
 	//for err_code, err_file_name := range http_server_config.HttpErrorHtml {
@@ -27,6 +27,7 @@ func NewHandlerMux(sConfig *SpiderConfig) *SpiderHandlerMux {
 
 	//生成mux
 	mux := &SpiderHandlerMux{
+		logger:logger,
 		controllerMap: map[string]reflect.Type{},
 	}
 
@@ -39,6 +40,7 @@ func NewHandlerMux(sConfig *SpiderConfig) *SpiderHandlerMux {
 	//init router
 	mux.router = NewRouter(mux)
 
+	mux.logger.Info("Server mux done~")
 	return mux
 }
 
