@@ -56,7 +56,7 @@ func (this *Request) Uri() string {
 	return this.request.RequestURI
 }
 
-func (this *Request) Url() string {
+func (this *Request) UrlPath() string {
 	return this.request.URL.Path
 }
 

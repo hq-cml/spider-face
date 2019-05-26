@@ -17,20 +17,23 @@ type Spider struct {
 	logger      core.SpiderLogger
 }
 
+//创建spider实例
 func NewSpider(sConfig *core.SpiderConfig,
-	controllers map[string]core.SpiderController, logger core.SpiderLogger) (*Spider, error) {
+		controllers map[string]core.SpiderController, logger core.SpiderLogger) (*Spider, error) {
+
 	if sConfig.BindAddr == "" {
 		return nil, errors.New("server Addr can't be empty...[ip:port]")
 	}
 
+	//如果没有模板路径和静态文件路径，则用默认的
 	if sConfig.TplPath == "" {
 		sConfig.TplPath = fmt.Sprintf("%s/tpl", helper.GetCurrentDir())
 	}
-
 	if sConfig.StaticPath == "" {
 		sConfig.StaticPath = fmt.Sprintf("%s/static", helper.GetCurrentDir())
 	}
 
+	//如果用户没有给定logger，则使用默认的logger
 	if logger == nil {
 		if sConfig.LogPath == "" {
 			logger = log.DefaultLogger
@@ -39,12 +42,13 @@ func NewSpider(sConfig *core.SpiderConfig,
 		}
 	}
 
-	//new Application
-	mux := core.NewHandlerMux(sConfig, logger)
+	//创建serverMux
+	mux, err := core.NewHandlerMux(sConfig, controllers, logger)
+	if err != nil {
+		return nil, err
+	}
 
-	//注册控制器
-	mux.RegisterController(controllers)
-
+	//替换掉golang自带的handler
 	server := &http.Server {
 		Addr: sConfig.BindAddr,
 		Handler: mux,
@@ -57,7 +61,7 @@ func NewSpider(sConfig *core.SpiderConfig,
 		logger : logger,
 	}
 
-	spd.logger.Infof("Spider init success!")
+	spd.logger.Info("Spider init success!")
 
 	return spd, nil
 }
@@ -70,7 +74,6 @@ func (spd *Spider) Run() {
 
 	//serverStat = STATE_RUNNING
 
-	//logger.RunLog("[Notice] Server start.")
 	//listen loop
 	//spd.Serve(srv.listener)
 

@@ -7,9 +7,11 @@ import (
 )
 
 type SpiderRouter struct {
-	ParentMux *SpiderHandlerMux
-	RewriteMap map[string][]*RewriteRouter
-	RewriteKey map[string]string
+	logger       SpiderLogger
+
+	ParentMux 	 *SpiderHandlerMux
+	RewriteMap	 map[string][]*RewriteRouter
+	RewriteKey	 map[string]string
 }
 
 type RewriteRouter struct {
@@ -20,8 +22,9 @@ type RewriteRouter struct {
 	action     string
 }
 
-func NewRouter(mux *SpiderHandlerMux) *SpiderRouter {
+func NewRouter(mux *SpiderHandlerMux, logger SpiderLogger) *SpiderRouter {
 	return &SpiderRouter{
+		logger: logger,
 		ParentMux: mux,
 		RewriteMap: make(map[string][]*RewriteRouter),
 		RewriteKey: make(map[string]string),
@@ -68,7 +71,7 @@ func (srt *SpiderRouter)RegRouter(controllerName string, controller SpiderContro
 }
 
 // create rewrite router
-func createRewriteRouter(method, pattern , controller, action string) *RewriteRouter {
+func createRewriteRouter(method, pattern, controller, action string) *RewriteRouter {
 	if pattern == "" || action == "" {
 		return nil
 	}
@@ -83,12 +86,12 @@ func createRewriteRouter(method, pattern , controller, action string) *RewriteRo
 	}
 
 	for idx, part := range urlParts {
-		if part[0:1] == ":" {
+		if part[0:1] == ":" {       //路径参数
 			router.urlParts[idx] = map[string]string{
 				"name": part[1:],
 				"type": "var",
 			}
-		} else if part[0:1] == "*" { //正则?
+		} else if part[0:1] == "*" { //通配
 			router.urlParts[idx] = map[string]string{
 				"name": part,
 				"type": "",
@@ -106,26 +109,28 @@ func createRewriteRouter(method, pattern , controller, action string) *RewriteRo
 	return router
 }
 
-
-func (srt *SpiderRouter) MatchRewrite(url, method string) (string, string, map[string]string, error) {
+//根据URL和参数，找到对应处理的controller和action
+func (srt *SpiderRouter) MatchRewrite(method, url string) (string, string, map[string]string, error) {
 	if _, ok := srt.RewriteMap[method]; ok == false {
+		srt.logger.Errf("No support method: %s", method)
 		return "", "", nil, errors.New("No match")
 	}
 
 	paths := strings.Split(strings.Trim(url, "/"), "/")
 	for _, router := range srt.RewriteMap[method] {
-		if match_param, match := srt.matchRouter(router, paths); !match {
+
+		if matchParam, match := srt.matchRouter(router, paths); !match {
 			continue
 		} else {
-			return router.controller, router.action, match_param, nil
+			return router.controller, router.action, matchParam, nil
 		}
 	}
 
 	return "", "", nil, errors.New("No match")
 }
 
-func (this *SpiderRouter) matchRouter(router *RewriteRouter, paths []string) (map[string]string, bool) {
-	var match_param map[string]string
+func (srt *SpiderRouter) matchRouter(router *RewriteRouter, paths []string) (map[string]string, bool) {
+	matchParam := map[string]string{}
 	var cnt int
 	for idx, part := range paths {
 		if _, exist := router.urlParts[idx]; !exist {
@@ -134,14 +139,10 @@ func (this *SpiderRouter) matchRouter(router *RewriteRouter, paths []string) (ma
 		if router.urlParts[idx]["type"] == "" {
 			if router.urlParts[idx]["name"] == "*" {
 				if idx < len(paths) {
-					if match_param == nil {
-						match_param = make(map[string]string)
-					}
-
 					param := paths[idx:]
 					param_num := len(param) / 2
 					for i := 0; i < param_num; i++ {
-						match_param[param[i*2]] = param[i*2+1]
+						matchParam[param[i*2]] = param[i*2+1]
 					}
 				}
 				break
@@ -152,17 +153,14 @@ func (this *SpiderRouter) matchRouter(router *RewriteRouter, paths []string) (ma
 			}
 			cnt++
 		} else if router.urlParts[idx]["type"] == "var" {
-			if match_param == nil {
-				match_param = make(map[string]string)
-			}
-			match_param[router.urlParts[idx]["name"]] = part
+			matchParam[router.urlParts[idx]["name"]] = part
 		}
 	}
 
 	if cnt != router.staticNum {
 		return nil, false
 	}
-	return match_param, true
+	return matchParam, true
 }
 
 // Get controller and action name from

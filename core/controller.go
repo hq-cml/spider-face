@@ -67,8 +67,8 @@ func (this *BaseController) Uri() string {
 	return this.request.Uri()
 }
 
-func (this *BaseController) Url() string {
-	return this.request.Url()
+func (this *BaseController) UrlPath() string {
+	return this.request.UrlPath()
 }
 
 func (this *BaseController) IP() string {

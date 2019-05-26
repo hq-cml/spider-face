@@ -28,6 +28,7 @@ func (hello *HelloController) GetRouter() map[string]interface{} {
 		"/hello/:id": "IndexAction",
 		"/hello": "HelloAction",
 		"/index": "IndexAction",
+		"/index/:id": "IndexAction",
 	}
 }
 

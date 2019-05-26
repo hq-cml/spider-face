@@ -3,18 +3,22 @@ package core
 import (
 	"net/http"
 	"reflect"
+	"fmt"
 )
 
 //Spider的http多路复用器
+//*SpiderHandlerMux实现了http.Handler接口，用来替换掉golang默认的DefaultServerMux
+//它是Spider的核心
 type SpiderHandlerMux struct {
-	logger        SpiderLogger
-	dispatcher    *Dispatcher
-	router        *SpiderRouter
-	controllerMap     map[string]reflect.Type
+	logger        	SpiderLogger
+	dispatcher    	*Dispatcher
+	router        	*SpiderRouter
+	controllerMap   map[string]reflect.Type
 }
 
 //create Application object
-func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger) *SpiderHandlerMux {
+func NewHandlerMux(sConfig *SpiderConfig, controllers map[string]SpiderController,
+		logger SpiderLogger) (*SpiderHandlerMux, error) {
 	//TODO
 	//http_server_config.Root = strings.TrimRight(http_server_config.Root, "/")
 	//for err_code, err_file_name := range http_server_config.HttpErrorHtml {
@@ -22,12 +26,12 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger) *SpiderHandlerMux
 	//	http_server_config.HttpErrorHtml[err_code] = err_html
 	//}
 
-	//全局配置
+	//用外层用户定制的conf初始化全局配置
 	GlobalConf = sConfig
 
 	//生成mux
 	mux := &SpiderHandlerMux{
-		logger:logger,
+		logger: logger,
 		controllerMap: map[string]reflect.Type{},
 	}
 
@@ -35,21 +39,30 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger) *SpiderHandlerMux
 	//initMime()
 
 	//init dispatcher
+	//TODO 待优化
 	mux.dispatcher = NewDispatcher()
 
-	//init router
-	mux.router = NewRouter(mux)
+	//创建路由
+	mux.router = NewRouter(mux, logger)
+
+	//注册控制器
+	err := mux.RegisterController(controllers)
+	if err != nil {
+		return nil, err
+	}
 
 	mux.logger.Info("Server mux done~")
-	return mux
+	return mux, nil
 }
 
-func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderController) {
+//注册控制器
+//TODO 应该有个默认的Controller
+func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderController) error {
 	for name, controller := range controllerMap {
+		//验重
 		if _, exist := mux.controllerMap[name]; exist {
-			//logger.RunLog("[Error] conflicting controller name:" + controller_name)
-			//return fmt.Errorf("%q is existed!", name)
-			continue;
+			mux.logger.Errf("Conflicting controller: %v", name)
+			return fmt.Errorf("Controller %q is existed!", name)
 		}
 
 		//var i interface{}
@@ -63,17 +76,20 @@ func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderC
 		//fmt.Println(reflect.Indirect(reflect.ValueOf(a)))
 		//fmt.Println(reflect.Indirect(reflect.ValueOf(i)))
 
-		//拿到controller的真实reflect.Value值
+		//获取controller的reflect.Value值
+		//reflect.Indirect保证即便是指针也能拿到实际的指向值
 		controllerValue := reflect.Indirect(reflect.ValueOf(controller))
 		mux.controllerMap[name] = controllerValue.Type()
 
+		//将各controller的路由注册上来
 		err := mux.router.RegRouter(name, controller)
 		if err != nil {
-			//logger.RunLog(fmt.Sprintf("[Error] RegController error :%v", err))
-			//os.Exit(0)
-			panic(err)
+			mux.logger.Errf("RegController error :%v", err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 func (this *SpiderHandlerMux) GetController(controllerName string) reflect.Type {

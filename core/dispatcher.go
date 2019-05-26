@@ -22,7 +22,6 @@ func NewDispatcher() *Dispatcher {
 func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter, r *http.Request) {
 	//init request
 	request := NewRequest(r)
-	//router := srt.GetRouter()
 	response := NewResponse(w, request)
 
 	var controllerName string
@@ -30,26 +29,23 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 	var matchParam map[string]string
 	var ok error
 
-	_ = matchParam //TODO
 	//w.Header("Status", fmt.Sprintf("%d", http.StatusOK))
 	w.WriteHeader(http.StatusOK)
 
-	url := strings.TrimRight(request.Url(), "/")
-	fmt.Println("r.URL: ", url)
-	if url != "" { //有url
-		controllerName, actionName, matchParam, ok = srt.MatchRewrite(url, r.Method)
+	urlPath := strings.TrimRight(request.UrlPath(), "/")
+	fmt.Println("r.URL PATH: ", urlPath)
+	if urlPath != "" { //有url
+		controllerName, actionName, matchParam, ok = srt.MatchRewrite(r.Method, urlPath)
 		if ok != nil {
-			fmt.Println("A------------", url)
-			OutputStaticFile(response, request, url)
+			OutputStaticFile(response, request, urlPath)
 			return
 		}
 
-		//TODO
-		//if match_param != nil {
-		//	request.rewrite_params = match_param
-		//}
+		if matchParam != nil && len(matchParam)>0{
+			request.rewriteParams = matchParam
+		}
 		actionName = strings.TrimSuffix(actionName, ACTION_SUFFIX)
-	} else if url == "" && request.Param(HTTP_METHOD_PARAM_NAME) == "" { //首页
+	} else if urlPath == "" && request.Param(HTTP_METHOD_PARAM_NAME) == "" { //首页
 		controllerName = DEFAULT_CONTROLLER
 		actionName = DEFAULT_ACTION
 	} else if request.Param(HTTP_METHOD_PARAM_NAME) != "" {
