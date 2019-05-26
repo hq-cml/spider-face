@@ -47,10 +47,10 @@ func (this *BaseController) Display(viewPath ...string) {
 	bytes, err := this.Render(viewPath...)
 
 	if err == nil {
-		this.response.Header("Content-Type", "text/html; charset=utf-8")
+		this.response.SetHeader("Content-Type", "text/html; charset=utf-8")
 		this.response.Body(bytes)
 	} else {
-		this.response.Header("Content-Type", "text/html; charset=utf-8")
+		this.response.SetHeader("Content-Type", "text/html; charset=utf-8")
 		this.response.Body([]byte(err.Error()))
 	}
 }
@@ -91,11 +91,11 @@ func (this *BaseController) Header(key string) string {
 }
 
 func (this *BaseController) SetHeader(key, value string) {
-	this.response.Header(key, value)
+	this.response.SetHeader(key, value)
 }
 
 func (this *BaseController) SetCookie(name string, value string, others ...interface{}) {
-	this.response.Cookie(name, value, others...)
+	this.response.SetCookie(name, value, others...)
 }
 
 func (this *BaseController) Echo(content string) {
@@ -103,7 +103,7 @@ func (this *BaseController) Echo(content string) {
 }
 
 func (this *BaseController) OutputBytes(bytes []byte) {
-	this.response.Header("Content-Type", "text/html; charset=utf-8")
+	this.response.SetHeader("Content-Type", "text/html; charset=utf-8")
 	this.response.Body(bytes)
 }
 

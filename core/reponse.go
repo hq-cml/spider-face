@@ -13,79 +13,62 @@ import (
 )
 
 type Response struct {
-	Writer        http.ResponseWriter
-	request       *Request
-	//server_config *HttpServerConfig
+	Writer  http.ResponseWriter
 }
 
-func NewResponse(w http.ResponseWriter, request *Request) *Response {
+func NewResponse(w http.ResponseWriter) *Response {
 	response := &Response{
 		Writer:        w,
-		request:       request,
 	}
 	return response
 }
 
-var cookieNameFilter = strings.NewReplacer("\n", "-", "\r", "-")
-var cookieValueFilter = strings.NewReplacer("\n", " ", "\r", " ", ";", " ")
-
-func filterName(n string) string {
-	return cookieNameFilter.Replace(n)
-}
-
-func filterValue(v string) string {
-	return cookieValueFilter.Replace(v)
-}
-
 // Set http response header
-func (this *Response) Header(key, val string) {
-	this.Writer.Header().Set(key, val)
+func (resp *Response) SetHeader(key, val string) {
+	resp.Writer.Header().Set(key, val)
 }
 
-func (this *Response) Body(html_content []byte) {
-	//TODO
-	//accept_encoding := this.request.Header("Accept-Encoding")
+// Set http response code
+func (resp *Response) SetHttpCode(code int) {
+	resp.Writer.WriteHeader(code)
+}
+
+func (resp *Response) Body(html_content []byte) {
+	//TODO 支持压缩
+	//accept_encoding := resp.request.Header("Accept-Encoding")
 	//if CompressType != COMPRESS_CLOSE && len(html_content) >= CompressMinSize && accept_encoding != "" && (strings.Index(accept_encoding, "gzip") >= 0 || strings.Index(accept_encoding, "flate") >= 0) {
 	//	switch CompressType {
 	//	case COMPRESS_GZIP:
-	//		this.Header("Content-Encoding", "gzip")
-	//		output_writer, _ := gzip.NewWriterLevel(this.Writer, gzip.BestSpeed)
+	//		resp.Header("Content-Encoding", "gzip")
+	//		output_writer, _ := gzip.NewWriterLevel(resp.Writer, gzip.BestSpeed)
 	//		defer output_writer.Close()
 	//		output_writer.Write(html_content)
 	//	case COMPRESS_FLATE:
-	//		this.Header("Content-Encoding", "deflate")
-	//		output_writer, _ := flate.NewWriter(this.Writer, flate.BestSpeed)
+	//		resp.Header("Content-Encoding", "deflate")
+	//		output_writer, _ := flate.NewWriter(resp.Writer, flate.BestSpeed)
 	//		defer output_writer.Close()
 	//		output_writer.Write(html_content)
 	//	}
 	//} else {
-		this.Writer.Write(html_content)
+		resp.Writer.Write(html_content)
 	//}
 }
 
 // Set cookie
 // Copy from beego @https://github.com/astaxie/beego
-func (this *Response) Cookie(name string, value string, others ...interface{}) {
+func (resp *Response) SetCookie(name string, value string, others ...interface{}) {
+	cookieNameFilter := strings.NewReplacer("\n", "-", "\r", "-")
+	cookieValueFilter := strings.NewReplacer("\n", " ", "\r", " ", ";", " ")
+
 	var b bytes.Buffer
-	fmt.Fprintf(&b, "%s=%s", filterName(name), filterValue(value))
+	fmt.Fprintf(&b, "%s=%s", cookieNameFilter.Replace(name), cookieValueFilter.Replace(value))
 	if len(others) > 0 {
 		switch v := others[0].(type) {
-		case int:
-			if v > 0 {
+		case int, int64, int32:
+			vv, _ := strconv.ParseInt(fmt.Sprintf("%v", v), 10, 64)
+			if vv > 0 {
 				fmt.Fprintf(&b, "; Max-Age=%d", v)
-			} else if v < 0 {
-				fmt.Fprintf(&b, "; Max-Age=0")
-			}
-		case int64:
-			if v > 0 {
-				fmt.Fprintf(&b, "; Max-Age=%d", v)
-			} else if v < 0 {
-				fmt.Fprintf(&b, "; Max-Age=0")
-			}
-		case int32:
-			if v > 0 {
-				fmt.Fprintf(&b, "; Max-Age=%d", v)
-			} else if v < 0 {
+			} else if vv < 0 {
 				fmt.Fprintf(&b, "; Max-Age=0")
 			}
 		}
@@ -97,7 +80,7 @@ func (this *Response) Cookie(name string, value string, others ...interface{}) {
 	// default "/"
 	if len(others) > 1 {
 		if v, ok := others[1].(string); ok && len(v) > 0 {
-			fmt.Fprintf(&b, "; Path=%s", filterValue(v))
+			fmt.Fprintf(&b, "; Path=%s", cookieValueFilter.Replace(v))
 		}
 	} else {
 		fmt.Fprintf(&b, "; Path=%s", "/")
@@ -105,7 +88,7 @@ func (this *Response) Cookie(name string, value string, others ...interface{}) {
 
 	if len(others) > 2 {
 		if v, ok := others[2].(string); ok && len(v) > 0 {
-			fmt.Fprintf(&b, "; Domain=%s", filterValue(v))
+			fmt.Fprintf(&b, "; Domain=%s", cookieValueFilter.Replace(v))
 		}
 	}
 
@@ -137,36 +120,38 @@ func (this *Response) Cookie(name string, value string, others ...interface{}) {
 		fmt.Fprintf(&b, "; HttpOnly")
 	}
 
-	this.Writer.Header().Add("Set-Cookie", b.String())
+	resp.Writer.Header().Add("Set-Cookie", b.String())
 }
 
 // Set output type:json
-func (this *Response) Json(data interface{}, coding ...bool) error {
-	this.Header("Content-Type", "application/json;charset=UTF-8")
+func (resp *Response) Json(data interface{}, coding ...bool) error {
+	resp.SetHeader("Content-Type", "application/json;charset=UTF-8")
 
 	var content []byte
 	var err error
 
 	content, err = json.Marshal(data)
 	if err != nil {
-		http.Error(this.Writer, err.Error(), http.StatusInternalServerError)
+		http.Error(resp.Writer, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 	if coding != nil && coding[0] == true {
 		content = []byte(unicode(string(content)))
 	}
-	this.Body(content)
+	resp.Body(content)
 	return nil
 }
 
-func (this *Response) Jsonp(callback string, data interface{}, coding ...bool) error { 	this.Header("Content-Type", "application/javascript;charset=UTF-8")
+func (resp *Response) Jsonp(callback string, data interface{}, coding ...bool) error {
+
+	resp.SetHeader("Content-Type", "application/javascript;charset=UTF-8")
 
 	var content []byte
 	var err error
 
 	content, err = json.Marshal(data)
 	if err != nil {
-		http.Error(this.Writer, err.Error(), http.StatusInternalServerError)
+		http.Error(resp.Writer, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 	if coding != nil && coding[0] == true {
@@ -177,11 +162,12 @@ func (this *Response) Jsonp(callback string, data interface{}, coding ...bool) e
 	ck.Write(content)
 	ck.WriteString(");\r\n")
 
-	this.Body(ck.Bytes())
+	resp.Body(ck.Bytes())
 	return nil
 }
 
 // Convert to unicode
+// TODO 测试
 func unicode(str string) string {
 	rs := []rune(str)
 	jsons := ""

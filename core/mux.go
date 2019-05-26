@@ -1,5 +1,10 @@
 package core
 
+/*
+ * 实现自己的多路复用器
+ * 它会替换掉golang默认的DefaultServerMux，是Spider的核心
+ */
+
 import (
 	"net/http"
 	"reflect"
@@ -14,9 +19,7 @@ var (
 	afterDispatch =  "AfterDispatchHook"
 )
 
-//Spider的http多路复用器
-//*SpiderHandlerMux实现了http.Handler接口，用来替换掉golang默认的DefaultServerMux
-//它是Spider的核心
+//多路复用器，用来替换掉golang默认的DefaultServerMux
 type HandlerMux struct {
 	logger        SpiderLogger
 	routerManger  *RouterManager
@@ -137,7 +140,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	routerManager := mux.routerManger
 	//init request & reponse
 	request := NewRequest(r)
-	response := NewResponse(w, request)
+	response := NewResponse(w)
 
 	var controllerName string
 	var actionName string
@@ -200,5 +203,5 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 		action.Call(requestParams)
 	}
 
-	response.Header("Connection", request.Header("Connection"))
+	response.SetHeader("Connection", request.Header("Connection"))
 }

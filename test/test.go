@@ -6,6 +6,8 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
 func test1() {
@@ -38,6 +40,19 @@ func test2() {
 	fmt.Println(bElem.Interface())
 }
 
+func test3() {
+	v := -10
+	vv, _ := strconv.ParseInt(fmt.Sprintf("%v", v), 10, 64)
+	if vv > 0 {
+		fmt.Println(">0", vv)
+	} else if vv < 0 {
+		fmt.Println("<0", vv)
+	}
+
+	cookieNameFilter := strings.NewReplacer("A", "B", "C", "D")
+	fmt.Println(cookieNameFilter.Replace("ACAC"))
+}
+
 func main() {
-	test2()
+	test3()
 }

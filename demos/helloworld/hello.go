@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"github.com/hq-cml/spider-face"
 	"github.com/hq-cml/spider-face/core"
-	"time"
 )
 
 //TODO 使用不够友好简单
