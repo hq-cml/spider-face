@@ -119,7 +119,7 @@ func (this *Request) Param(key string) string {
 	return this.request.Form.Get(key)
 }
 
-// Get all request params passed by GET method
+// Get all request params passed by GET Method
 func (this *Request) ParamGet() (data map[string]string) {
 	err := this.ParseMultiForm()
 	if err != nil {
@@ -141,7 +141,7 @@ func (this *Request) ParamGet() (data map[string]string) {
 	return data
 }
 
-// Get all request params passed by POST method
+// Get all request params passed by POST Method
 func (this *Request) ParamPost() (data map[string]interface{}) {
 	err := this.ParseMultiForm()
 	if err != nil {

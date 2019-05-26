@@ -115,7 +115,7 @@ func (mux *SpiderHandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//
 	//request_time := float64(end_time.UnixNano()-start_time.UnixNano()) / 1000000000
 	//
-	//log_format := "%s - [%s] %s %s %s %s %.5f \"%s\"" //ip - [time] method uri scheme status request_time agent
+	//log_format := "%s - [%s] %s %s %s %s %.5f \"%s\"" //ip - [time] Method uri scheme status request_time agent
 
 	//access_log := fmt.Sprintf(log_format,
 	//	mux.Isset(r.RemoteAddr),

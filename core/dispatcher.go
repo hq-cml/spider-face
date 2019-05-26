@@ -19,41 +19,38 @@ func NewDispatcher() *Dispatcher {
 	}
 }
 
-func (this *Dispatcher) DispatchHandler(srt *RouterManager, w http.ResponseWriter, r *http.Request) {
+func (this *Dispatcher) DispatchHandler(rtm *RouterManager, w http.ResponseWriter, r *http.Request) {
 	//init request
 	request := NewRequest(r)
 	response := NewResponse(w, request)
 
 	var controllerName string
 	var actionName string
-	var matchParam map[string]string
+	var pathParam map[string]string
 	var ok error
 
 	urlPath := strings.TrimRight(request.UrlPath(), "/")
 	fmt.Println("REQ URL PATH: ", urlPath)
 	if urlPath != "" { //有url
-		controllerName, actionName, matchParam, ok = srt.MatchRewrite(r.Method, urlPath)
+		controllerName, actionName, pathParam, ok = rtm.AnalysePath(r.Method, urlPath)
 		if ok != nil {
 			OutputStaticFile(response, request, urlPath)
 			return
 		}
 
-		if matchParam != nil && len(matchParam)>0{
-			request.rewriteParams = matchParam
+		if pathParam != nil && len(pathParam)>0{
+			request.rewriteParams = pathParam
 		}
 		actionName = strings.TrimSuffix(actionName, ACTION_SUFFIX)
-	} else if urlPath == "" && request.Param(HTTP_METHOD_PARAM_NAME) == "" { //首页
+	} else  { //首页
 		controllerName = DEFAULT_CONTROLLER
 		actionName = DEFAULT_ACTION
-	} else if request.Param(HTTP_METHOD_PARAM_NAME) != "" {
-		controllerName, actionName = srt.ParseMethod(request.Param(HTTP_METHOD_PARAM_NAME))
-		actionName = strings.Title(strings.ToLower(actionName))
 	}
 
 	request.SetController(controllerName)
 	request.SetAction(actionName)
 
-	controller, err := srt.NewController(controllerName)
+	controller, err := rtm.NewController(controllerName)
 	if err != nil {
 		OutErrorHtml(response, request, http.StatusNotFound)
 		fmt.Println(err)
@@ -73,7 +70,7 @@ func (this *Dispatcher) DispatchHandler(srt *RouterManager, w http.ResponseWrite
 
 	initIandler := controller.MethodByName("Init")
 	if initIandler.IsValid() == false {
-		//logger.ErrorLog("Can't find method of \"Init\" in controller " + controller_name)
+		//logger.ErrorLog("Can't find Method of \"Init\" in controller " + controller_name)
 		//OutErrorHtml(response, request, http.StatusInternalServerError)
 		panic("A")
 		return
