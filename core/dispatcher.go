@@ -29,14 +29,12 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 	var matchParam map[string]string
 	var ok error
 
-	//w.Header("Status", fmt.Sprintf("%d", http.StatusOK))
-	w.WriteHeader(http.StatusOK)
-
 	urlPath := strings.TrimRight(request.UrlPath(), "/")
 	fmt.Println("r.URL PATH: ", urlPath)
 	if urlPath != "" { //有url
 		controllerName, actionName, matchParam, ok = srt.MatchRewrite(r.Method, urlPath)
 		if ok != nil {
+			fmt.Println("A---------------------", urlPath)
 			OutputStaticFile(response, request, urlPath)
 			return
 		}

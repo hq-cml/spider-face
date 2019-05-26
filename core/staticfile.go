@@ -64,8 +64,6 @@ func OutputStaticFile(response *Response, request *Request, file string) {
 }
 
 func OutErrorHtml(response *Response, request *Request, httpCode int) {
-	response.Header("Status", fmt.Sprintf("%d", httpCode))
-
 	//TODO
 	//用户自定义的错误页面
 	//if err_html, ok := response.server_config.HttpErrorHtml[httpCode]; ok == true {
@@ -75,8 +73,14 @@ func OutErrorHtml(response *Response, request *Request, httpCode int) {
 	//	}
 	//}
 
+	//设置HTTP Repsonse Header
+	response.Header("Status", fmt.Sprintf("%d", httpCode))
 	response.Header("Content-Type", "text/html; charset=utf-8")
 	response.Header("X-Content-Type-Options", "nosniff")
+
+	//设置HTTP CODE
 	response.Writer.WriteHeader(httpCode)
+
+	//回写HTTP Body
 	fmt.Fprintln(response.Writer, ErrorPagesMap[httpCode])
 }
