@@ -4,21 +4,27 @@ import (
 	"net/http"
 	"reflect"
 	"fmt"
+	"strings"
+	"errors"
+)
+
+var (
+	beforeDispatch = "BeforeDispatch"
+	afterDispatch =  "AfterDispatch"
 )
 
 //Spider的http多路复用器
 //*SpiderHandlerMux实现了http.Handler接口，用来替换掉golang默认的DefaultServerMux
 //它是Spider的核心
-type SpiderHandlerMux struct {
+type HandlerMux struct {
 	logger        SpiderLogger
-	dispatcher    *Dispatcher
 	routerManger  *RouterManager
 	controllerMap map[string]reflect.Type
 }
 
 //create Application object
-func NewHandlerMux(sConfig *SpiderConfig, controllers map[string]SpiderController,
-		logger SpiderLogger) (*SpiderHandlerMux, error) {
+func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]SpiderController,
+		logger SpiderLogger) (*HandlerMux, error) {
 	//TODO
 	//http_server_config.Root = strings.TrimRight(http_server_config.Root, "/")
 	//for err_code, err_file_name := range http_server_config.HttpErrorHtml {
@@ -30,7 +36,7 @@ func NewHandlerMux(sConfig *SpiderConfig, controllers map[string]SpiderControlle
 	GlobalConf = sConfig
 
 	//生成mux
-	mux := &SpiderHandlerMux{
+	mux := &HandlerMux{
 		logger: logger,
 		controllerMap: map[string]reflect.Type{},
 	}
@@ -38,15 +44,11 @@ func NewHandlerMux(sConfig *SpiderConfig, controllers map[string]SpiderControlle
 	//init mime
 	//initMime()
 
-	//init dispatcher
-	//TODO 待优化
-	mux.dispatcher = NewDispatcher()
-
 	//创建路由
 	mux.routerManger = NewRouterManager(mux, logger)
 
 	//注册控制器
-	err := mux.RegisterController(controllers)
+	err := mux.RegisterController(controllerMap)
 	if err != nil {
 		return nil, err
 	}
@@ -57,24 +59,13 @@ func NewHandlerMux(sConfig *SpiderConfig, controllers map[string]SpiderControlle
 
 //注册控制器
 //TODO 应该有个默认的Controller
-func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderController) error {
+func (mux *HandlerMux) RegisterController(controllerMap map[string]SpiderController) error {
 	for name, controller := range controllerMap {
 		//验重
 		if _, exist := mux.controllerMap[name]; exist {
 			mux.logger.Errf("Conflicting controller: %v", name)
 			return fmt.Errorf("Controller %q is existed!", name)
 		}
-
-		//var i interface{}
-		//var a interface{}
-		//a = 10
-		//i = &a
-		//
-		//fmt.Println(reflect.ValueOf(a))
-		//fmt.Println(reflect.ValueOf(i))
-		//
-		//fmt.Println(reflect.Indirect(reflect.ValueOf(a)))
-		//fmt.Println(reflect.Indirect(reflect.ValueOf(i)))
 
 		//获取controller的reflect.Value值
 		//reflect.Indirect保证即便是指针也能拿到实际的指向值
@@ -92,16 +83,27 @@ func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderC
 	return nil
 }
 
-func (this *SpiderHandlerMux) GetController(controllerName string) reflect.Type {
-	if c, ok := this.controllerMap[controllerName]; ok == false {
-		return nil
-	} else {
-		return c.(reflect.Type)
+//通过反射包和controller的名字，还原Controller的reflect.Value
+func (mux *HandlerMux) ValueOfController(controllerName string) (reflect.Value, error) {
+	var valueOfController reflect.Value
+
+	typeOfController, exist := mux.controllerMap[controllerName];
+	if !exist {
+		//http 404
+		return valueOfController, errors.New("Warn : Can't find " + controllerName)
 	}
+
+	valueOfController = reflect.New(typeOfController)
+	if !valueOfController.IsValid() {
+		//http 404
+		return valueOfController, errors.New("Warn : Can't find " + controllerName)
+	}
+
+	return valueOfController, nil
 }
 
 //实现http.Handler接口
-func (mux *SpiderHandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (mux *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//start_time := time.Now()
 
 	//TODO rewrite
@@ -109,7 +111,7 @@ func (mux *SpiderHandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//	matchRewrite(r)
 	//}
 
-	mux.dispatcher.DispatchHandler(mux.routerManger, w, r)
+	mux.DispatchHandler(w, r)
 
 	//end_time := time.Now()
 	//
@@ -128,4 +130,89 @@ func (mux *SpiderHandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//	mux.Isset(r.Header.Get("User-Agent")),
 	//)
 	//logger.AccessLog(access_log)
+}
+
+func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
+	routerManager := mux.routerManger
+	//init request & reponse
+	request := NewRequest(r)
+	response := NewResponse(w, request)
+
+	var controllerName string
+	var actionName string
+	var pathParam map[string]string
+	var ok error
+
+	//去除urlPaht，交给路由管理利器来分析，得到controller和action
+	urlPath := strings.TrimRight(request.UrlPath(), "/")
+	fmt.Println("REQ URL PATH: ", urlPath)
+	if urlPath != "" { //有url
+		controllerName, actionName, pathParam, ok = routerManager.AnalysePath(r.Method, urlPath)
+		if ok != nil {
+			//分析失败，可能是没有找到合适的处理器，也可能是一个静态文件
+			OutputStaticFile(response, request, urlPath)
+			return
+		}
+
+		actionName = strings.TrimSuffix(actionName, ACTION_SUFFIX)
+	} else  { //首页
+		controllerName = DEFAULT_CONTROLLER
+		actionName = DEFAULT_ACTION
+	}
+
+	request.rewriteParams = pathParam
+	request.SetController(controllerName)
+	request.SetAction(actionName)
+
+	valueOfController, err := mux.ValueOfController(controllerName)
+	if err != nil {
+		OutErrorHtml(response, request, http.StatusNotFound)
+		fmt.Println(err)
+		return
+	}
+
+	controllerHandler := valueOfController.MethodByName(actionName + ACTION_SUFFIX)
+	if controllerHandler.IsValid() == false {
+		OutErrorHtml(response, request, http.StatusNotFound)
+		return
+	}
+
+	initParams := make([]reflect.Value, 2)
+	initParams[0] = reflect.ValueOf(request)
+	initParams[1] = reflect.ValueOf(response)
+
+	initIandler := valueOfController.MethodByName("Init")
+	if initIandler.IsValid() == false {
+		//logger.ErrorLog("Can't find Method of \"Init\" in controller " + controller_name)
+		//OutErrorHtml(response, request, http.StatusInternalServerError)
+		panic("A")
+		return
+	}
+
+	handlers := make([]reflect.Value, 0)
+	if beforeHandler := valueOfController.MethodByName(beforeDispatch); beforeHandler.IsValid() == true {
+		handlers = append(handlers, beforeHandler)
+	}
+
+	handlers = append(handlers, controllerHandler)
+	if afterHandler := valueOfController.MethodByName(afterDispatch); afterHandler.IsValid() == true {
+		handlers = append(handlers, afterHandler)
+	}
+
+	//执行 Init()
+	initResult := initIandler.Call(initParams)
+
+	if reflect.Indirect(initResult[0]).Bool() == false {
+		//logger.ErrorLog("Method of \"Init\" in controller " + controller_name + " return false")
+		OutErrorHtml(response, request, http.StatusInternalServerError)
+		return
+	}
+
+	requestParams := make([]reflect.Value, 0)
+	//Run : Init -> before_dispatch -> controller_handler -> after_dispatch
+	for _, v := range handlers {
+		v.Call(requestParams)
+	}
+
+	response.Header("Connection", request.Header("Connection"))
 }

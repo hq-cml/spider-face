@@ -3,13 +3,12 @@ package core
 import (
 	"strings"
 	"errors"
-	"reflect"
 )
 
 type RouterManager struct {
 	logger       SpiderLogger
 
-	ParentMux    *SpiderHandlerMux
+	ParentMux    *HandlerMux
 	RouterTable  map[string][]*RouterNode  //路由表，核心
 	UniqKeyMap   map[string]string         //用于防重复校验
 }
@@ -31,7 +30,7 @@ type PathPartition struct {
 	Value string
 }
 
-func NewRouterManager(mux *SpiderHandlerMux, logger SpiderLogger) *RouterManager {
+func NewRouterManager(mux *HandlerMux, logger SpiderLogger) *RouterManager {
 	return &RouterManager{
 		logger:      logger,
 		ParentMux:   mux,
@@ -165,31 +164,4 @@ func (rtm *RouterManager) matchRouter(rNode *RouterNode, paths []string) (map[st
 		return nil, false
 	}
 	return pathParam, true
-}
-
-// create new controller by controller name
-func (rtm *RouterManager) NewController(controllerName string) (reflect.Value, error) {
-	//register := GetRegister()
-
-	//m_arr := make([]reflect.Value, 0)
-	var newController reflect.Value
-
-	//if register == nil {
-	//	//http 500
-	//	return controller_instance, errors.New("Server Error : Can't find \"Register\"")
-	//}
-
-	controller_type := rtm.ParentMux.GetController(controllerName)
-	if controller_type == nil {
-		//http 404
-		return newController, errors.New("Warn : Can't find " + controllerName)
-	}
-
-	newController = reflect.New(controller_type)
-	if false == newController.IsValid() {
-		//http 404
-		return newController, errors.New("Warn : Can't find " + controllerName)
-	}
-
-	return newController, nil
 }

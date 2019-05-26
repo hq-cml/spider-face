@@ -19,7 +19,7 @@ type Spider struct {
 
 //创建spider实例
 func NewSpider(sConfig *core.SpiderConfig,
-		controllers map[string]core.SpiderController, logger core.SpiderLogger) (*Spider, error) {
+		controllerMap map[string]core.SpiderController, logger core.SpiderLogger) (*Spider, error) {
 
 	if sConfig.BindAddr == "" {
 		return nil, errors.New("server Addr can't be empty...[ip:port]")
@@ -43,7 +43,7 @@ func NewSpider(sConfig *core.SpiderConfig,
 	}
 
 	//创建serverMux
-	mux, err := core.NewHandlerMux(sConfig, controllers, logger)
+	mux, err := core.NewHandlerMux(sConfig, controllerMap, logger)
 	if err != nil {
 		return nil, err
 	}
