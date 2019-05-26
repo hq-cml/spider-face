@@ -28,7 +28,7 @@ func NewRewriter() *Rewriter {
 }
 // This most like nginx rewrite module
 // Support regex
-// This is different from controller rewrite-router
+// This is different from controller rewrite-routerManger
 func (rwt *Rewriter)RegRewriteRule(list map[string]string) {
 	for p, m := range list {
 		if strings.Index(p, "(") < 0 {

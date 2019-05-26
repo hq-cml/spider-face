@@ -10,10 +10,10 @@ import (
 //*SpiderHandlerMux实现了http.Handler接口，用来替换掉golang默认的DefaultServerMux
 //它是Spider的核心
 type SpiderHandlerMux struct {
-	logger        	SpiderLogger
-	dispatcher    	*Dispatcher
-	router        	*SpiderRouter
-	controllerMap   map[string]reflect.Type
+	logger        SpiderLogger
+	dispatcher    *Dispatcher
+	routerManger  *RouterManager
+	controllerMap map[string]reflect.Type
 }
 
 //create Application object
@@ -43,7 +43,7 @@ func NewHandlerMux(sConfig *SpiderConfig, controllers map[string]SpiderControlle
 	mux.dispatcher = NewDispatcher()
 
 	//创建路由
-	mux.router = NewRouter(mux, logger)
+	mux.routerManger = NewRouterManager(mux, logger)
 
 	//注册控制器
 	err := mux.RegisterController(controllers)
@@ -82,7 +82,7 @@ func (mux *SpiderHandlerMux) RegisterController(controllerMap map[string]SpiderC
 		mux.controllerMap[name] = controllerValue.Type()
 
 		//将各controller的路由注册上来
-		err := mux.router.RegRouter(name, controller)
+		err := mux.routerManger.RegisterRouter(name, controller)
 		if err != nil {
 			mux.logger.Errf("RegController error :%v", err)
 			return err
@@ -109,7 +109,7 @@ func (mux *SpiderHandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//	matchRewrite(r)
 	//}
 
-	mux.dispatcher.DispatchHandler(mux.router, w, r)
+	mux.dispatcher.DispatchHandler(mux.routerManger, w, r)
 
 	//end_time := time.Now()
 	//

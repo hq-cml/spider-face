@@ -12,8 +12,14 @@ type BaseController struct {
 	view     *View
 }
 
+type ControllerRouter struct {
+	Method string
+	Pattern string
+	Action string
+}
+
 type SpiderController interface {
-	GetRouter() map[string]interface{}
+	GetRouter() []ControllerRouter
 }
 
 func (this *BaseController) Init(request *Request, response *Response) bool {

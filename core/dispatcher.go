@@ -19,7 +19,7 @@ func NewDispatcher() *Dispatcher {
 	}
 }
 
-func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter, r *http.Request) {
+func (this *Dispatcher) DispatchHandler(srt *RouterManager, w http.ResponseWriter, r *http.Request) {
 	//init request
 	request := NewRequest(r)
 	response := NewResponse(w, request)
@@ -30,11 +30,10 @@ func (this *Dispatcher) DispatchHandler(srt *SpiderRouter, w http.ResponseWriter
 	var ok error
 
 	urlPath := strings.TrimRight(request.UrlPath(), "/")
-	fmt.Println("r.URL PATH: ", urlPath)
+	fmt.Println("REQ URL PATH: ", urlPath)
 	if urlPath != "" { //有url
 		controllerName, actionName, matchParam, ok = srt.MatchRewrite(r.Method, urlPath)
 		if ok != nil {
-			fmt.Println("A---------------------", urlPath)
 			OutputStaticFile(response, request, urlPath)
 			return
 		}

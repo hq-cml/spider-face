@@ -23,12 +23,13 @@ func (hello *HelloController) IndexAction() {
 	hello.Display()
 }
 
-func (hello *HelloController) GetRouter() map[string]interface{} {
-	return map[string]interface{} {
-		"/hello/:id": "IndexAction",
-		"/hello": "HelloAction",
-		"/index": "IndexAction",
-		"/index/:id": "IndexAction",
+func (hello *HelloController) GetRouter() []core.ControllerRouter {
+	return []core.ControllerRouter{
+		{Method:"GET", Pattern:"/hello/:id", Action: "IndexAction",},
+		{Method:"GET", Pattern: "/hello", Action:"HelloAction",},
+		{Method:"GET", Pattern: "/index", Action:"IndexAction",},
+		{Method:"GET", Pattern: "/index/:id", Action:"IndexAction",},
+		{Method:"GET", Pattern: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
 	}
 }
 

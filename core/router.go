@@ -6,15 +6,15 @@ import (
 	"reflect"
 )
 
-type SpiderRouter struct {
+type RouterManager struct {
 	logger       SpiderLogger
 
 	ParentMux 	 *SpiderHandlerMux
-	RewriteMap	 map[string][]*RewriteRouter
+	RewriteMap	 map[string][]*RouterNode
 	RewriteKey	 map[string]string
 }
 
-type RewriteRouter struct {
+type RouterNode struct {
 	urlParts   map[int]map[string]string
 	staticNum  int
 	method     string
@@ -22,62 +22,50 @@ type RewriteRouter struct {
 	action     string
 }
 
-func NewRouter(mux *SpiderHandlerMux, logger SpiderLogger) *SpiderRouter {
-	return &SpiderRouter{
+func NewRouterManager(mux *SpiderHandlerMux, logger SpiderLogger) *RouterManager {
+	return &RouterManager{
 		logger: logger,
 		ParentMux: mux,
-		RewriteMap: make(map[string][]*RewriteRouter),
+		RewriteMap: make(map[string][]*RouterNode),
 		RewriteKey: make(map[string]string),
 	}
 }
 
-// Reg router in controller by func RegRouter() map[string]interface{}
+// Reg routerManger in controller by func RegisterRouter() map[string]interface{}
 // support rewrite
-func (srt *SpiderRouter)RegRouter(controllerName string, controller SpiderController ) error {
-	urlMap := controller.GetRouter()
-	if urlMap == nil {
+func (srt *RouterManager) RegisterRouter(controllerName string, controller SpiderController) error {
+	routers := controller.GetRouter()
+	if routers == nil {
 		return nil
 	}
 
-	for pattern, tb := range urlMap {
-		switch tb.(type) {
-		case string:
-			if old, exist := srt.RewriteKey["GET "+pattern]; exist {
-				return errors.New("Can't register router:\"GET " + pattern + "\",it had been registed in controller:" + old)
-			}
-			actionName := tb.(string)
-			r := createRewriteRouter("GET", pattern, controllerName, actionName)
-			if r == nil {
-				return errors.New("Can't register router:" + pattern)
-			}
-			srt.RewriteMap["GET"] = append(srt.RewriteMap["GET"], r)
-			srt.RewriteKey["GET "+pattern] = controllerName
-		case map[string]string:
-			for method, action := range tb.(map[string]string) {
-				method = strings.ToUpper(method)
-				if old, exist := srt.RewriteKey[method+" "+pattern]; exist {
-					return errors.New("Can't register router:\"" + method + " " + pattern + "\",it had been registed in controller:" + old)
-				}
-				r := createRewriteRouter(method, pattern, controllerName, action)
-				if r == nil {
-					return errors.New("Can't register router:\"" + method + " " + pattern + "\"")
-				}
-				srt.RewriteMap[method] = append(srt.RewriteMap[method], r)
-				srt.RewriteKey[method+" "+pattern] = controllerName
-			}
+	for _, router := range routers {
+		method := router.Method
+		pattern := router.Pattern
+		action := router.Action
+
+		method = strings.ToUpper(method)
+		if old, exist := srt.RewriteKey[method+" "+pattern]; exist {
+			return errors.New("Can't register routerManger:\"" + method + " " + pattern + "\",it had been registed in controller:" + old)
 		}
+		r := createRewriteRouter(method, pattern, controllerName, action)
+		if r == nil {
+			return errors.New("Can't register routerManger:\"" + method + " " + pattern + "\"")
+		}
+		srt.RewriteMap[method] = append(srt.RewriteMap[method], r)
+		srt.RewriteKey[method+" "+pattern] = controllerName
 	}
 	return nil
 }
 
-// create rewrite router
-func createRewriteRouter(method, pattern, controller, action string) *RewriteRouter {
+// create rewrite routerManger
+func createRewriteRouter(method, pattern, controller, action string) *RouterNode {
 	if pattern == "" || action == "" {
 		return nil
 	}
 	urlParts := strings.Split(strings.Trim(pattern, "/"), "/")
 
-	router := &RewriteRouter{
+	router := &RouterNode{
 		urlParts:   make(map[int]map[string]string),
 		staticNum:  0,
 		method:     method,
@@ -91,9 +79,9 @@ func createRewriteRouter(method, pattern, controller, action string) *RewriteRou
 				"name": part[1:],
 				"type": "var",
 			}
-		} else if part[0:1] == "*" { //通配
+		} else if part[0:1] == "*" { //Pathinfo的参数形式/yera/2019/month/5/day/10
 			router.urlParts[idx] = map[string]string{
-				"name": part,
+				"name": "*",
 				"type": "",
 			}
 
@@ -110,7 +98,7 @@ func createRewriteRouter(method, pattern, controller, action string) *RewriteRou
 }
 
 //根据URL和参数，找到对应处理的controller和action
-func (srt *SpiderRouter) MatchRewrite(method, url string) (string, string, map[string]string, error) {
+func (srt *RouterManager) MatchRewrite(method, url string) (string, string, map[string]string, error) {
 	if _, ok := srt.RewriteMap[method]; ok == false {
 		srt.logger.Errf("No support method: %s", method)
 		return "", "", nil, errors.New("No match")
@@ -129,7 +117,7 @@ func (srt *SpiderRouter) MatchRewrite(method, url string) (string, string, map[s
 	return "", "", nil, errors.New("No match")
 }
 
-func (srt *SpiderRouter) matchRouter(router *RewriteRouter, paths []string) (map[string]string, bool) {
+func (srt *RouterManager) matchRouter(router *RouterNode, paths []string) (map[string]string, bool) {
 	matchParam := map[string]string{}
 	var cnt int
 	for idx, part := range paths {
@@ -166,7 +154,7 @@ func (srt *SpiderRouter) matchRouter(router *RewriteRouter, paths []string) (map
 // Get controller and action name from
 // request parame "m"
 // eg: demo.index,return demo index
-func (this *SpiderRouter) ParseMethod(method string) (controller_name string, action_name string) {
+func (this *RouterManager) ParseMethod(method string) (controller_name string, action_name string) {
 	method_map := strings.SplitN(method, ".", 2)
 	switch len(method_map) {
 	case 1:
@@ -179,7 +167,7 @@ func (this *SpiderRouter) ParseMethod(method string) (controller_name string, ac
 }
 
 // create new controller by controller name
-func (this *SpiderRouter) NewController(controllerName string) (reflect.Value, error) {
+func (this *RouterManager) NewController(controllerName string) (reflect.Value, error) {
 	//register := GetRegister()
 
 	//m_arr := make([]reflect.Value, 0)
