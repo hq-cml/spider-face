@@ -20,6 +20,7 @@ type ControllerRouter struct {
 
 type SpiderController interface {
 	GetRouter() []ControllerRouter
+	Init(request *Request, response *Response) bool
 }
 
 func (this *BaseController) Init(request *Request, response *Response) bool {

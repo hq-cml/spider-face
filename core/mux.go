@@ -8,9 +8,10 @@ import (
 	"errors"
 )
 
+//TODO 这个扩展成通用的Hook
 var (
-	beforeDispatch = "BeforeDispatch"
-	afterDispatch =  "AfterDispatch"
+	beforeDispatch = "BeforeDispatchHook"
+	afterDispatch =  "AfterDispatchHook"
 )
 
 //Spider的http多路复用器
@@ -171,47 +172,32 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	controllerHandler := valueOfController.MethodByName(actionName + ACTION_SUFFIX)
-	if controllerHandler.IsValid() == false {
+	//执行controller的Init()
+	c, b := valueOfController.Interface().(SpiderController)
+	if !b {
+		panic("Oh my god")
+	}
+	c.Init(request, response)
+
+	//执行Action（包括前后的Hook，如果有）
+	actions := make([]reflect.Value, 0)
+	controllerAction := valueOfController.MethodByName(actionName + ACTION_SUFFIX)
+	if controllerAction.IsValid() == false {
 		OutErrorHtml(response, request, http.StatusNotFound)
 		return
 	}
-
-	initParams := make([]reflect.Value, 2)
-	initParams[0] = reflect.ValueOf(request)
-	initParams[1] = reflect.ValueOf(response)
-
-	initIandler := valueOfController.MethodByName("Init")
-	if initIandler.IsValid() == false {
-		//logger.ErrorLog("Can't find Method of \"Init\" in controller " + controller_name)
-		//OutErrorHtml(response, request, http.StatusInternalServerError)
-		panic("A")
-		return
+	if beforeAction := valueOfController.MethodByName(beforeDispatch); beforeAction.IsValid() == true {
+		actions = append(actions, beforeAction)
 	}
-
-	handlers := make([]reflect.Value, 0)
-	if beforeHandler := valueOfController.MethodByName(beforeDispatch); beforeHandler.IsValid() == true {
-		handlers = append(handlers, beforeHandler)
-	}
-
-	handlers = append(handlers, controllerHandler)
-	if afterHandler := valueOfController.MethodByName(afterDispatch); afterHandler.IsValid() == true {
-		handlers = append(handlers, afterHandler)
-	}
-
-	//执行 Init()
-	initResult := initIandler.Call(initParams)
-
-	if reflect.Indirect(initResult[0]).Bool() == false {
-		//logger.ErrorLog("Method of \"Init\" in controller " + controller_name + " return false")
-		OutErrorHtml(response, request, http.StatusInternalServerError)
-		return
+	actions = append(actions, controllerAction)
+	if afterAction := valueOfController.MethodByName(afterDispatch); afterAction.IsValid() == true {
+		actions = append(actions, afterAction)
 	}
 
 	requestParams := make([]reflect.Value, 0)
-	//Run : Init -> before_dispatch -> controller_handler -> after_dispatch
-	for _, v := range handlers {
-		v.Call(requestParams)
+	//Run : before_dispatch -> controller_handler -> after_dispatch
+	for _, action := range actions {
+		action.Call(requestParams)
 	}
 
 	response.Header("Connection", request.Header("Connection"))
