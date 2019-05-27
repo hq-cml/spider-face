@@ -5,17 +5,20 @@ import (
 	"errors"
 )
 
+/*
+ * 维护路由表,
+ */
 type RouterManager struct {
 	logger       SpiderLogger
 
-	ParentMux    *HandlerMux
-	RouterTable  map[string][]*RouterNode  //路由表，核心
+	RouterTable  map[string][]*RouterNode  //路由表，核心 method=>list(node)
 	UniqKeyMap   map[string]string         //用于防重复校验
 }
 
+//一条路由规则
 type RouterNode struct {
 	UrlParts   []PathPartition
-	NormalNum  int //整个path中normal的数量
+	NormalNum  int             //整个path中normal段的数量
 	Method     string
 	Controller string
 	Action     string
@@ -30,10 +33,9 @@ type PathPartition struct {
 	Value string
 }
 
-func NewRouterManager(mux *HandlerMux, logger SpiderLogger) *RouterManager {
+func NewRouterManager(logger SpiderLogger) *RouterManager {
 	return &RouterManager{
 		logger:      logger,
-		ParentMux:   mux,
 		RouterTable: make(map[string][]*RouterNode),
 		UniqKeyMap:  make(map[string]string),
 	}

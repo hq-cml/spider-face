@@ -45,11 +45,11 @@ func (this *View) Assign(key interface{}, value interface{}) {
 	}
 }
 
-func (this *View) Render(view_name string) ([]byte, error) {
+func (this *View) Render(viewPathName string) ([]byte, error) {
 	if ViewRoot == "" {
 		return []byte(""), errors.New("TplPath not set")
 	}
-	view_name = strings.ToLower(view_name)
+	viewPathName = strings.ToLower(viewPathName)
 	//TODO
 	//if RunMod == "dev" {
 	//	t := template.New(view_name).Delims("{{", "}}").Funcs(view_func)
@@ -60,11 +60,11 @@ func (this *View) Render(view_name string) ([]byte, error) {
 	//	ViewTemplates[view_name] = t
 	//}
 
-	if tpl, ok := ViewTemplates[view_name]; ok == false {
-		return []byte(""), errors.New("template " + ViewRoot + "/" + view_name + ViewExt + " not found or compile failed")
+	if tpl, ok := ViewTemplates[viewPathName]; ok == false {
+		return []byte(""), errors.New("template " + ViewRoot + "/" + viewPathName + ViewExt + " not found or compile failed")
 	} else {
 		html_content_bytes := bytes.NewBufferString("")
-		err := tpl.ExecuteTemplate(html_content_bytes, view_name, this.data)
+		err := tpl.ExecuteTemplate(html_content_bytes, viewPathName, this.data)
 		if err != nil {
 			return []byte(""), err
 		}
@@ -77,14 +77,14 @@ func AddViewFunc(key string, func_name interface{}) {
 	view_func[key] = func_name
 }
 
-func CompileTpl(view_root string) error {
-	if view_root == "" {
+func CompileTpl(viewRoot string) error {
+	if viewRoot == "" {
 		return nil
 	}
-	ViewRoot = view_root
+	ViewRoot = viewRoot
 	template_files = make(map[string]string)
 
-	filepath.Walk(view_root, func(path string, f os.FileInfo, err error) error {
+	filepath.Walk(viewRoot, func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() || (f.Mode()&os.ModeSymlink) > 0 {
 			return nil
 		}

@@ -101,7 +101,7 @@ func (req *Request) parseParam() error {
 // Get request param by key
 func (req *Request) Param(key string) string {
 	if req.pathParams != nil {
-		if d, ok := req.pathParams[key]; ok == true {
+		if d, exist := req.pathParams[key]; exist {
 			return d
 		}
 	}
@@ -111,6 +111,10 @@ func (req *Request) Param(key string) string {
 	}
 	return req.request.Form.Get(key)
 }
+
+//TODO 获取POST的指定参数
+
+//TODO 获取Body
 
 // Get all request params passed by GET Method
 func (req *Request) ParamGet() (data map[string]string) {
@@ -124,8 +128,10 @@ func (req *Request) ParamGet() (data map[string]string) {
 	}
 	data = make(map[string]string)
 	for k, v := range req.request.Form {
-		data[k] = v[0]
+		data[k] = v[0] //只取第一个
 	}
+
+	//追加上路径参数
 	if req.pathParams != nil {
 		for k, v := range req.pathParams {
 			data[k] = v

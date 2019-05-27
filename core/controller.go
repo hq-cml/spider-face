@@ -13,11 +13,11 @@ type Controller interface {
 	//用户实现
 	GetRouter() []ControllerRouter
 
-	//Spider提供
+	//Spider提供, 获取Controller的实时状态用于任务分发场景
 	Init(request *Request, response *Response) bool
-	SetController(name string)
+	SetName(name string)
+	GetName() string
 	SetAction(name string)
-	GetController() string
 	GetAction() string
 }
 
@@ -47,11 +47,15 @@ func (rc *RuntimeController) Init(request *Request, response *Response) bool {
 	return true
 }
 
-func (rc *RuntimeController) SetController(name string) {
+func (rc *RuntimeController) SetName(name string) {
 	if name == "" {
 		return
 	}
 	rc.controllerName = name
+}
+
+func (rc *RuntimeController) GetName() string {
+	return rc.controllerName
 }
 
 func (rc *RuntimeController) SetAction(name string) {
@@ -59,10 +63,6 @@ func (rc *RuntimeController) SetAction(name string) {
 		return
 	}
 	rc.actionName = name
-}
-
-func (rc *RuntimeController) GetController() string {
-	return rc.controllerName
 }
 
 func (rc *RuntimeController) GetAction() string {
@@ -77,31 +77,34 @@ func (rc *RuntimeController) Param(key string, defaultValue ...string) string {
 	return v
 }
 
+//向页面模板引擎注册数据,待展示用
 func (rc *RuntimeController) Assign(key interface{}, value interface{}) {
 	rc.view.Assign(key, value)
 }
 
+//输出展示页面
 func (rc *RuntimeController) Display(viewPath ...string) {
 	bytes, err := rc.Render(viewPath...)
 
 	if err == nil {
 		rc.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-		rc.response.Body(bytes)
+		rc.response.WriteBody(bytes)
 	} else {
 		rc.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-		rc.response.Body([]byte(err.Error()))
+		rc.response.WriteBody([]byte(err.Error()))
 	}
 }
 
 func (rc *RuntimeController) Render(viewPath ...string) ([]byte, error) {
-	var view_name string
+	var viewPathName string
 	if viewPath == nil || viewPath[0] == "" {
-		view_name = rc.GetController() + "/" + rc.GetAction()
-		fmt.Println("viewName:", view_name)
+		viewPathName = rc.GetName() + "/" + rc.GetAction()
+		fmt.Println("viewName:", viewPathName)
 	} else {
-		view_name = viewPath[0]
+		viewPathName = viewPath[0]
+		fmt.Println("viewName_x:", viewPathName)
 	}
-	return rc.view.Render(view_name)
+	return rc.view.Render(viewPathName)
 }
 
 func (rc *RuntimeController) GetCookie(name string) string {
@@ -142,14 +145,14 @@ func (rc *RuntimeController) Echo(content string) {
 
 func (rc *RuntimeController) OutputBytes(bytes []byte) {
 	rc.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-	rc.response.Body(bytes)
+	rc.response.WriteBody(bytes)
 }
 
-func (rc *RuntimeController) Json(data interface{}, coding ...bool) error {
+func (rc *RuntimeController) OutputJson(data interface{}, coding ...bool) error {
 	return rc.response.Json(data, coding...)
 }
 
-func (rc *RuntimeController) Jsonp(callback string, data interface{}, coding ...bool) error {
+func (rc *RuntimeController) OutputJsonp(callback string, data interface{}, coding ...bool) error {
 	return rc.response.Jsonp(callback, data, coding...)
 }
 

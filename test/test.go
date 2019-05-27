@@ -53,6 +53,14 @@ func test3() {
 	fmt.Println(cookieNameFilter.Replace("ACAC"))
 }
 
+func test4() {
+	a := strings.Replace("Ab[args]cdef", "[args]", "haha", -1)
+	fmt.Println(a)
+
+	b := strings.SplitN("a,b,c,d", ",", 2)
+	fmt.Println(b)
+}
+
 func main() {
-	test3()
+	test4()
 }

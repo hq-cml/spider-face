@@ -23,17 +23,18 @@ func NewResponse(w http.ResponseWriter) *Response {
 	return response
 }
 
-// Set http response header
+//设置 http response header
 func (resp *Response) SetHeader(key, val string) {
 	resp.Writer.Header().Set(key, val)
 }
 
-// Set http response code
+//设置 http response code
 func (resp *Response) SetHttpCode(code int) {
 	resp.Writer.WriteHeader(code)
 }
 
-func (resp *Response) Body(html_content []byte) {
+//回写Http body
+func (resp *Response) WriteBody(html_content []byte) {
 	//TODO 支持压缩
 	//accept_encoding := resp.request.Header("Accept-Encoding")
 	//if CompressType != COMPRESS_CLOSE && len(html_content) >= CompressMinSize && accept_encoding != "" && (strings.Index(accept_encoding, "gzip") >= 0 || strings.Index(accept_encoding, "flate") >= 0) {
@@ -54,7 +55,7 @@ func (resp *Response) Body(html_content []byte) {
 	//}
 }
 
-// Set cookie
+//返回设置cookie
 // Copy from beego @https://github.com/astaxie/beego
 func (resp *Response) SetCookie(name string, value string, others ...interface{}) {
 	cookieNameFilter := strings.NewReplacer("\n", "-", "\r", "-")
@@ -123,7 +124,7 @@ func (resp *Response) SetCookie(name string, value string, others ...interface{}
 	resp.Writer.Header().Add("Set-Cookie", b.String())
 }
 
-// Set output type:json
+//返回Json
 func (resp *Response) Json(data interface{}, coding ...bool) error {
 	resp.SetHeader("Content-Type", "application/json;charset=UTF-8")
 
@@ -138,10 +139,11 @@ func (resp *Response) Json(data interface{}, coding ...bool) error {
 	if coding != nil && coding[0] == true {
 		content = []byte(unicode(string(content)))
 	}
-	resp.Body(content)
+	resp.WriteBody(content)
 	return nil
 }
 
+//返回Jsonp
 func (resp *Response) Jsonp(callback string, data interface{}, coding ...bool) error {
 
 	resp.SetHeader("Content-Type", "application/javascript;charset=UTF-8")
@@ -162,12 +164,12 @@ func (resp *Response) Jsonp(callback string, data interface{}, coding ...bool) e
 	ck.Write(content)
 	ck.WriteString(");\r\n")
 
-	resp.Body(ck.Bytes())
+	resp.WriteBody(ck.Bytes())
 	return nil
 }
 
 // Convert to unicode
-// TODO 测试
+// 已经过测试
 func unicode(str string) string {
 	rs := []rune(str)
 	jsons := ""
