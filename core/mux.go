@@ -27,7 +27,7 @@ type HandlerMux struct {
 }
 
 //create Application object
-func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]SpiderController,
+func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
 		logger SpiderLogger) (*HandlerMux, error) {
 	//TODO
 	//http_server_config.Root = strings.TrimRight(http_server_config.Root, "/")
@@ -63,7 +63,7 @@ func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]SpiderControl
 
 //注册控制器
 //TODO 应该有个默认的Controller
-func (mux *HandlerMux) RegisterController(controllerMap map[string]SpiderController) error {
+func (mux *HandlerMux) RegisterController(controllerMap map[string]Controller) error {
 	for name, controller := range controllerMap {
 		//验重
 		if _, exist := mux.controllerMap[name]; exist {
@@ -165,8 +165,6 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request.rewriteParams = pathParam
-	request.SetController(controllerName)
-	request.SetAction(actionName)
 
 	valueOfController, err := mux.ValueOfController(controllerName)
 	if err != nil {
@@ -176,11 +174,13 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//执行controller的Init()
-	c, b := valueOfController.Interface().(SpiderController)
+	c, b := valueOfController.Interface().(Controller)
 	if !b {
 		panic("Oh my god")
 	}
 	c.Init(request, response)
+	c.SetController(controllerName)
+	c.SetAction(actionName)
 
 	//执行Action（包括前后的Hook，如果有）
 	actions := make([]reflect.Value, 0)

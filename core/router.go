@@ -41,7 +41,7 @@ func NewRouterManager(mux *HandlerMux, logger SpiderLogger) *RouterManager {
 
 //注册路由
 //将外部传入的Controller拆解成路由表的记录，注册注册进入Spider
-func (rtm *RouterManager) RegisterRouter(controllerName string, controller SpiderController) error {
+func (rtm *RouterManager) RegisterRouter(controllerName string, controller Controller) error {
 	routers := controller.GetRouter()
 	if routers == nil {
 		return nil

@@ -9,7 +9,7 @@ import (
 
 //TODO 使用不够友好简单
 type HelloController struct {
-	core.BaseController
+	core.RuntimeController
 }
 
 func (hello *HelloController) HelloAction() {
@@ -33,7 +33,7 @@ func (hello *HelloController) GetRouter() []core.ControllerRouter {
 	}
 }
 
-var controllerMap = map[string]core.SpiderController{
+var controllerMap = map[string]core.Controller{
 	"hello": &HelloController{},
 }
 

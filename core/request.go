@@ -12,8 +12,6 @@ import (
 
 type Request struct {
 	request        *http.Request
-	controllerName string
-	actionName     string
 	formParsed     bool
 	rewriteParams  map[string]string
 }
@@ -24,28 +22,6 @@ func NewRequest(r *http.Request) *Request {
 	}
 
 	return request_instance
-}
-
-func (this *Request) SetController(name string) {
-	if name == "" {
-		return
-	}
-	this.controllerName = name
-}
-
-func (this *Request) SetAction(name string) {
-	if name == "" {
-		return
-	}
-	this.actionName = name
-}
-
-func (this *Request) GetController() string {
-	return this.controllerName
-}
-
-func (this *Request) GetAction() string {
-	return this.actionName
 }
 
 func (this *Request) Method() string {
