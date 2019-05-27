@@ -104,20 +104,20 @@ func (rc *RuntimeController) Render(viewPath ...string) ([]byte, error) {
 	return rc.view.Render(view_name)
 }
 
-func (rc *RuntimeController) Cookie(name string) string {
-	return rc.request.Cookie(name)
+func (rc *RuntimeController) GetCookie(name string) string {
+	return rc.request.GetCookie(name)
 }
 
-func (rc *RuntimeController) Uri() string {
-	return rc.request.Uri()
+func (rc *RuntimeController) GetUri() string {
+	return rc.request.GetUri()
 }
 
 func (rc *RuntimeController) UrlPath() string {
 	return rc.request.UrlPath()
 }
 
-func (rc *RuntimeController) IP() string {
-	return rc.request.IP()
+func (rc *RuntimeController) GetClientIP() string {
+	return rc.request.GetClientIP()
 }
 
 func (rc *RuntimeController) Scheme() string {
@@ -125,7 +125,7 @@ func (rc *RuntimeController) Scheme() string {
 }
 
 func (rc *RuntimeController) Header(key string) string {
-	return rc.request.Header(key)
+	return rc.request.GetHeader(key)
 }
 
 func (rc *RuntimeController) SetHeader(key, value string) {
@@ -154,7 +154,7 @@ func (rc *RuntimeController) Jsonp(callback string, data interface{}, coding ...
 }
 
 func (rc *RuntimeController) GetMethod() string {
-	return rc.request.Method()
+	return rc.request.GetMethod()
 }
 
 //获取所有get变量

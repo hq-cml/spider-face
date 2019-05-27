@@ -164,7 +164,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 		actionName = DEFAULT_ACTION
 	}
 
-	request.rewriteParams = pathParam
+	request.pathParams = pathParam
 
 	valueOfController, err := mux.ValueOfController(controllerName)
 	if err != nil {
@@ -203,5 +203,5 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 		action.Call(requestParams)
 	}
 
-	response.SetHeader("Connection", request.Header("Connection"))
+	response.SetHeader("Connection", request.GetHeader("Connection"))
 }
