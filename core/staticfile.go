@@ -6,42 +6,39 @@ import (
 	"fmt"
 )
 
+//禁用默认的IE 和chrome错误页面显示
+var disableIEAndChrome = `
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->`
+
 var ErrorPagesMap = map[int]string {
-	403 :
-	`<html>
-	<head><title>403 Forbidden</title></head>
-	<body bgcolor="white">
-	<center><h1>403 Forbidden</h1></center>
-	<hr><center>spider/0.0.1</center>
-	</body>
-	</html>
-	`,
-	404 :
-	`
-	<html>
-	<head><title>404 Not Found</title></head>
-	<body bgcolor="white">
-	<center><h1>404 Not Found</h1></center>
-	<hr><center>spider/0.0.1</center>
-	</body>
-	</html>
-	`,
-	500 :
-	`
-	<html>
-	<head><title>500 Internal Server Error</title></head>
-	<body bgcolor="white">
-	<center><h1>500 Internal Server Error</h1></center>
-	<hr><center>spider/0.0.1</center>
-	</body>
-	</html>
-	<!-- a padding to disable MSIE and Chrome friendly error page -->
-	<!-- a padding to disable MSIE and Chrome friendly error page -->
-	<!-- a padding to disable MSIE and Chrome friendly error page -->
-	<!-- a padding to disable MSIE and Chrome friendly error page -->
-	<!-- a padding to disable MSIE and Chrome friendly error page -->
-	<!-- a padding to disable MSIE and Chrome friendly error page -->
-	`,
+	403 : `<html>
+<head><title>403 Forbidden</title></head>
+<body bgcolor="white">
+<center><h1>403 Forbidden</h1></center>
+<hr><center>spider/0.0.1</center>
+</body>
+</html>`,
+
+	404 :`<html>
+<head><title>404 Not Found</title></head>
+<body bgcolor="white">
+<center><h1>404 Not Found</h1></center>
+<hr><center>spider/0.0.1</center>
+</body>
+</html>`,
+
+	500 : `<html>
+<head><title>500 Internal Server Error</title></head>
+<body bgcolor="white">
+<center><h1>500 Internal Server Error</h1></center>
+<hr><center>spider/0.0.1</center>
+</body>
+</html>`,
 }
 
 func OutputStaticFile(response *Response, request *Request, file string) {
@@ -82,5 +79,5 @@ func OutErrorHtml(response *Response, request *Request, httpCode int) {
 	response.SetHttpCode(httpCode)
 
 	//回写HTTP Body
-	fmt.Fprintln(response.Writer, ErrorPagesMap[httpCode])
+	fmt.Fprintln(response.Writer, ErrorPagesMap[httpCode] + disableIEAndChrome)
 }

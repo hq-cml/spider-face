@@ -70,7 +70,7 @@ func (rc *RuntimeController) GetAction() string {
 }
 
 func (rc *RuntimeController) Param(key string, defaultValue ...string) string {
-	v := rc.request.Param(key)
+	v := rc.request.FindParam(key)
 	if v == "" && defaultValue != nil {
 		return defaultValue[0]
 	}
@@ -162,12 +162,17 @@ func (rc *RuntimeController) GetMethod() string {
 
 //获取所有get变量
 func (rc *RuntimeController) GET() map[string]string {
-	return rc.request.ParamGet()
+	return rc.request.GetAllGetParams()
 }
 
 //获取所有post提交变量
 func (rc *RuntimeController) POST() map[string]interface{} {
-	return rc.request.ParamPost()
+	return rc.request.GetAllPostParams()
+}
+
+//获取request的body
+func (rc *RuntimeController) ReqBody() []byte {
+	return rc.request.ReadBody()
 }
 
 //跳转
@@ -176,13 +181,7 @@ func (rc *RuntimeController) Location(url string) {
 }
 
 //TODO
-// 获取所有上传文件
-// files, _ := this.GetUploadFiles("user_icon")
-// for i, _ := range files {
-//	 file, _ := files[i].Open()
-//	 defer file.Close()
-//	 log.Print(this.GetFileSize(&file))
-// }
+//获取上传文件
 func (rc *RuntimeController) GetUploadFiles(key string) ([]*multipart.FileHeader, error) {
 	return rc.request.GetUploadFiles(key)
 }

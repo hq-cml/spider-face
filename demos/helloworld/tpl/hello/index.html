@@ -9,7 +9,9 @@
 <h3>
 当前时间: {{date "Y/m/d H:i:s" .nowtime}}
 <br>
-传参: {{.id}}
+路径传参: {{.id}}
+GET传参: {{.name}}
+post传参: {{.age}}
 </h3>
 
 {{template "public/footer"}}

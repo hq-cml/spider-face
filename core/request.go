@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"mime/multipart"
+	"io/ioutil"
 )
 
 type Request struct {
@@ -68,8 +69,14 @@ func (req *Request) Scheme() string {
 	return "https"
 }
 
+//指定key的所有值会同时返回，如果有多个用逗号分隔
 func (req *Request) GetHeader(key string) string {
 	return req.request.Header.Get(key)
+}
+
+//指定key的所有值会同时返回，以切片形式
+func (req *Request) GetHeaderSlice(key string) []string {
+	return req.request.Header[key]
 }
 
 // Get cookie
@@ -83,10 +90,13 @@ func (req *Request) GetCookie(key string) string {
 
 //对参数就进行语法分析
 func (req *Request) parseParam() error {
-	if req.formParsed == true || req.request.Form != nil || req.request.PostForm != nil || req.request.MultipartForm != nil {
+	//如果已经解析过一次了，则直接返回
+	if req.formParsed == true || req.request.Form != nil ||
+		req.request.PostForm != nil || req.request.MultipartForm != nil {
 		return nil
 	}
 
+	//进行参数解析
 	req.formParsed = true
 	if strings.Contains(req.GetHeader("Content-Type"), "multipart/form-data") {
 		if err := req.request.ParseMultipartForm(32 << 20); err != nil {
@@ -99,7 +109,8 @@ func (req *Request) parseParam() error {
 }
 
 // Get request param by key
-func (req *Request) Param(key string) string {
+// 同时兼容Post和Get参数
+func (req *Request) FindParam(key string) string {
 	if req.pathParams != nil {
 		if d, exist := req.pathParams[key]; exist {
 			return d
@@ -109,15 +120,20 @@ func (req *Request) Param(key string) string {
 	if err != nil {
 		return ""
 	}
-	return req.request.Form.Get(key)
+	return req.request.Form.Get(key) //request.Form兼容Post和Get参数
 }
 
-//TODO 获取POST的指定参数
-
-//TODO 获取Body
+//读取Body
+func (req *Request) ReadBody() []byte {
+	s, err := ioutil.ReadAll(req.request.Body) //把body 内容读入字符串 s
+	if err != nil {
+		return nil
+	}
+	return s
+}
 
 // Get all request params passed by GET Method
-func (req *Request) ParamGet() (data map[string]string) {
+func (req *Request) GetAllGetParams() (data map[string]string) {
 	err := req.parseParam()
 	if err != nil {
 		return nil
@@ -141,7 +157,7 @@ func (req *Request) ParamGet() (data map[string]string) {
 }
 
 // Get all request params passed by POST Method
-func (req *Request) ParamPost() (data map[string]interface{}) {
+func (req *Request) GetAllPostParams() (data map[string]interface{}) {
 	err := req.parseParam()
 	if err != nil {
 		return nil
@@ -159,7 +175,6 @@ func (req *Request) ParamPost() (data map[string]interface{}) {
 	}
 	return data
 }
-
 
 // Get all upload files
 func (req *Request) GetUploadFiles(key string) ([]*multipart.FileHeader, error) {
