@@ -22,6 +22,7 @@ var (
 //多路复用器，用来替换掉golang默认的DefaultServerMux
 type HandlerMux struct {
 	logger        SpiderLogger
+	rewriter  	  *Rewriter
 	routerManger  *RouterManager
 	controllerMap map[string]reflect.Type
 }
@@ -45,11 +46,17 @@ func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
 		controllerMap: map[string]reflect.Type{},
 	}
 
+	//生成rewriter
+	mux.rewriter = NewRewriter(logger)
+	mux.rewriter.RegRewriteRule(map[string]string {
+		"/test/rewrite": "index",
+	})
+
 	//init mime
 	//initMime()
 
 	//创建路由
-	mux.routerManger = NewRouterManager(mux, logger)
+	mux.routerManger = NewRouterManager(logger)
 
 	//注册控制器
 	err := mux.RegisterController(controllerMap)
@@ -111,9 +118,9 @@ func (mux *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//start_time := time.Now()
 
 	//TODO rewrite
-	//if r.URL.Path != "/" {
-	//	matchRewrite(r)
-	//}
+	if r.URL.Path != "/" {
+		mux.rewriter.MatchRewrite(r)
+	}
 
 	mux.DispatchHandler(w, r)
 
@@ -149,7 +156,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	//去除urlPaht，交给路由管理利器来分析，得到controller和action
 	urlPath := strings.TrimRight(request.UrlPath(), "/")
-	fmt.Println("REQ URL PATH: ", urlPath)
+	fmt.Println("REQ URL PATH: ", r.Method, urlPath)
 	if urlPath != "" { //有url
 		controllerName, actionName, pathParam, ok = routerManager.AnalysePath(r.Method, urlPath)
 		if ok != nil {
@@ -179,7 +186,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 		panic("Oh my god")
 	}
 	c.Init(request, response)
-	c.SetController(controllerName)
+	c.SetName(controllerName)
 	c.SetAction(actionName)
 
 	//执行Action（包括前后的Hook，如果有）

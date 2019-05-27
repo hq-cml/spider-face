@@ -10,6 +10,7 @@ import (
 
 //TODO 待测试
 type Rewriter struct {
+	logger        SpiderLogger
 	rewriteRegexp []*RegexRewriteRule
 	rewriteStatic map[string]string
 }
@@ -20,8 +21,9 @@ type RegexRewriteRule struct {
 	regex   *regexp.Regexp
 }
 
-func NewRewriter() *Rewriter {
+func NewRewriter(logger SpiderLogger) *Rewriter {
 	return &Rewriter{
+		logger: logger,
 		rewriteRegexp : []*RegexRewriteRule{},
 		rewriteStatic : map[string]string{},
 	}
@@ -54,10 +56,10 @@ func (rwt *Rewriter)RegRewriteRule(list map[string]string) {
 func (rwt *Rewriter)MatchRewrite(r *http.Request) {
 	urlPath := r.URL.Path
 	var rewrite_url string = ""
-	var ok bool
+	var exist bool
 
-	fmt.Println("urlPath-----", urlPath)
-	if rewrite_url, ok = rwt.rewriteStatic[urlPath]; ok == true {
+	fmt.Println("Before rewrite urlPath-----", urlPath)
+	if rewrite_url, exist = rwt.rewriteStatic[urlPath]; exist {
 		goto RESET_URI
 	}
 
@@ -86,17 +88,18 @@ func (rwt *Rewriter)MatchRewrite(r *http.Request) {
 	}
 
 	RESET_URI:
-	fmt.Println("rewrite_url:", rewrite_url)
+	fmt.Println("rewrite_url_1:", rewrite_url)
 	rewrite_url = strings.Replace(rewrite_url, "[args]", r.URL.RawQuery, -1)
-	fmt.Println("rewrite_url:", rewrite_url)
+	fmt.Println("rewrite_url_2:", rewrite_url)
 	uri_map := strings.SplitN(rewrite_url, "?", 2)
 
 	if len(uri_map) == 2 {
-		fmt.Println("X-----")
 		r.URL.Path = uri_map[0]
 		r.URL.RawQuery = uri_map[1]
+		fmt.Println("X-----", r.URL.Path)
+		fmt.Println("X-----", r.URL.RawQuery)
 	} else {
-		fmt.Println("Y-----")
 		r.URL.Path = uri_map[0]
+		fmt.Println("Y-----", r.URL.Path)
 	}
 }
