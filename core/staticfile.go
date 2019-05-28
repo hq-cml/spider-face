@@ -41,14 +41,14 @@ var ErrorPagesMap = map[int]string {
 </html>`,
 }
 
-func OutputStaticFile(response *Response, request *Request, file string) {
+func OutputStaticFile(response *Response, request *Request, file string, customErrHtml map[int]string) {
 	filePath := GlobalConf.StaticPath + file
 	fi, err := os.Stat(filePath)
 	if err != nil && os.IsNotExist(err) {
-		OutErrorHtml(response, request, http.StatusNotFound)
+		OutErrorHtml(response, request, http.StatusNotFound, customErrHtml)
 		return
 	} else if fi.IsDir() == true {
-		OutErrorHtml(response, request, http.StatusForbidden)
+		OutErrorHtml(response, request, http.StatusForbidden, customErrHtml)
 		return
 	}
 	//file_size := fi.Size()
@@ -60,15 +60,14 @@ func OutputStaticFile(response *Response, request *Request, file string) {
 
 }
 
-func OutErrorHtml(response *Response, request *Request, httpCode int) {
-	//TODO
+func OutErrorHtml(response *Response, request *Request, httpCode int, customErrHtml map[int]string) {
 	//用户自定义的错误页面
-	//if err_html, ok := response.server_config.HttpErrorHtml[httpCode]; ok == true {
-	//	if fi, err := os.Stat(err_html); (err == nil || os.IsExist(err)) && fi.IsDir() != true {
-	//		http.ServeFile(response.Writer, request.request, err_html)
-	//		return
-	//	}
-	//}
+	if errHtml, exist := customErrHtml[httpCode]; exist {
+		if fi, err := os.Stat(errHtml); (err == nil || os.IsExist(err)) && fi.IsDir() != true {
+			http.ServeFile(response.Writer, request.request, errHtml)
+			return
+		}
+	}
 
 	//设置HTTP Repsonse Header
 	response.SetHeader("Status", fmt.Sprintf("%d", httpCode))

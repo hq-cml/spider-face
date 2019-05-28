@@ -42,8 +42,11 @@ func NewSpider(sConfig *core.SpiderConfig,
 		}
 	}
 
+	//TODO
+	customErrHtml := map[int]string{}
+
 	//创建serverMux
-	mux, err := core.NewHandlerMux(sConfig, controllerMap, logger)
+	mux, err := core.NewHandlerMux(sConfig, controllerMap, logger, customErrHtml)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +72,6 @@ func NewSpider(sConfig *core.SpiderConfig,
 	}
 
 	spd.logger.Info("Spider init success!")
-
 	return spd, nil
 }
 

@@ -23,19 +23,21 @@ var (
 type HandlerMux struct {
 	logger        SpiderLogger
 	rewriter  	  *Rewriter
+    customErrHtml map[int]string
 	routerManger  *RouterManager
 	controllerMap map[string]reflect.Type
 }
 
 //create Application object
 func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
-		logger SpiderLogger) (*HandlerMux, error) {
-	//TODO
-	//http_server_config.Root = strings.TrimRight(http_server_config.Root, "/")
-	//for err_code, err_file_name := range http_server_config.HttpErrorHtml {
-	//	err_html := http_server_config.Root + "/" + strings.TrimLeft(err_file_name, "/")
-	//	http_server_config.HttpErrorHtml[err_code] = err_html
-	//}
+		logger SpiderLogger, customErrHtmls map[int]string) (*HandlerMux, error) {
+
+	//初始化用户自定义的错误页面,如果有
+	customErrHtml := map[int]string{}
+	for code, errHtml := range customErrHtmls {
+		ht := sConfig.StaticPath + "/" + strings.TrimLeft(errHtml, "/")
+		customErrHtml[code] = ht
+	}
 
 	//用外层用户定制的conf初始化全局配置
 	GlobalConf = sConfig
@@ -43,6 +45,7 @@ func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
 	//生成mux
 	mux := &HandlerMux{
 		logger: logger,
+		customErrHtml:customErrHtml,
 		controllerMap: map[string]reflect.Type{},
 	}
 
@@ -163,7 +166,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 		controllerName, actionName, pathParam, ok = routerManager.AnalysePath(r.Method, urlPath)
 		if ok != nil {
 			//分析失败，可能是没有找到合适的处理器，也可能是一个静态文件
-			OutputStaticFile(response, request, urlPath)
+			OutputStaticFile(response, request, urlPath, mux.customErrHtml)
 			return
 		}
 
@@ -177,7 +180,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	valueOfController, err := mux.ValueOfController(controllerName)
 	if err != nil {
-		OutErrorHtml(response, request, http.StatusNotFound)
+		OutErrorHtml(response, request, http.StatusNotFound, mux.customErrHtml)
 		fmt.Println(err)
 		return
 	}
@@ -195,7 +198,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	actions := make([]reflect.Value, 0)
 	controllerAction := valueOfController.MethodByName(actionName + ACTION_SUFFIX)
 	if controllerAction.IsValid() == false {
-		OutErrorHtml(response, request, http.StatusNotFound)
+		OutErrorHtml(response, request, http.StatusNotFound, mux.customErrHtml)
 		return
 	}
 	if beforeAction := valueOfController.MethodByName(beforeDispatch); beforeAction.IsValid() == true {
