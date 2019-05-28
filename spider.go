@@ -67,8 +67,9 @@ func NewSpider(sConfig *core.SpiderConfig,
 }
 
 func (spd *Spider) Run() {
-	//解析模板
-	core.CompileTpl(spd.Config.TplPath)
+	//初始化解析视图模板
+	core.InitViewTemplate(spd.Config.TplPath)
+
 	//信号处理函数
 	//go srv.signalHandle()
 

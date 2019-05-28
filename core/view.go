@@ -8,17 +8,17 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
+	"regexp"
 )
 
 var (
-	ViewRoot       string
-	ViewExt        string = ".html"
-	ViewTemplates  map[string]*template.Template
-	template_files map[string]string
-	view_func      map[string]interface{}
+	ViewRoot      string
+	ViewExt       string = ".html"
+	ViewTemplates map[string]*template.Template
+	templateFiles map[string]string
+	viewFunc      template.FuncMap //map[string]interface{}
 )
 
 type View struct {
@@ -26,10 +26,10 @@ type View struct {
 }
 
 func init() {
-	view_func = make(map[string]interface{})
-	view_func["date"] = Date
-	view_func["strtotime"] = StrToTime
-	view_func["time"] = Time
+	viewFunc = template.FuncMap{}
+	viewFunc["date"] = Date
+	viewFunc["strtotime"] = StrToTime
+	viewFunc["time"] = Time
 }
 
 func NewView() *View {
@@ -73,85 +73,133 @@ func (this *View) Render(viewPathName string) ([]byte, error) {
 	}
 }
 
+//TODO支持用户自己增加
 func AddViewFunc(key string, func_name interface{}) {
-	view_func[key] = func_name
+	viewFunc[key] = func_name
 }
 
-func CompileTpl(viewRoot string) error {
+func InitViewTemplate(viewRoot string) error {
 	if viewRoot == "" {
 		return nil
 	}
 	ViewRoot = viewRoot
-	template_files = make(map[string]string)
+	templateFiles = make(map[string]string)
 
 	filepath.Walk(viewRoot, func(path string, f os.FileInfo, err error) error {
+		//忽略目录名和软链
 		if f.IsDir() || (f.Mode()&os.ModeSymlink) > 0 {
 			return nil
 		}
 
+		//忽略非法后缀名
 		if strings.HasSuffix(path, ViewExt) == false {
 			return nil
 		}
 
-		file_name := strings.Trim(strings.Replace(path, ViewRoot, "", 1), "/")
-		template_files[strings.TrimSuffix(file_name, ViewExt)] = path
+		fileName := strings.Trim(strings.Replace(path, ViewRoot, "", 1), "/")
+		templateFiles[strings.TrimSuffix(fileName, ViewExt)] = path
 		return nil
 	})
 
+	//fmt.Println("templateFiles: ", helper.JsonEncode(templateFiles))
 	ViewTemplates = make(map[string]*template.Template)
-
-	for name, file := range template_files {
-		if _, err := os.Stat(file); err != nil && os.IsNotExist(err) {
-			fmt.Printf("parse template %q err : %q", file, err)
+	for name, filePath := range templateFiles {
+		if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {
+			fmt.Printf("parse template %q err : %q", filePath, err)
 			continue
 		}
-		t := template.New(name).Delims("{{", "}}").Funcs(view_func)
 
-		t, err := parseTemplate(t, file)
-		if err != nil || t == nil {
-			continue
+		//注册自定义函数
+		tpl := template.New(name).Delims("{{", "}}").Funcs(viewFunc)
+
+		//解析模板
+		fmt.Println("\n\nQ----------------")
+		//t, err := parseTemplate(t, filePath)
+		//if err != nil || t == nil {
+		//	continue
+		//}
+
+		files := []string{}
+		err := getAllFiles(filePath, &files)
+		if err != nil {
+			panic(err)
 		}
-		ViewTemplates[name] = t
+		tpl, err = tpl.ParseFiles(files...)
+		if err != nil {
+			panic(err)
+		}
+		ViewTemplates[name] = tpl
 	}
 
 	return nil
 }
 
-func parseTemplate(template *template.Template, file string) (t *template.Template, err error) {
-	data, _ := ioutil.ReadFile(file)
-
-	t, err = template.Parse(string(data))
+func getAllFiles(path string, files *[]string) error {
+	*files = append(*files, path)
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	//TODO 功能重复??
 	reg := regexp.MustCompile(`{{\s{0,}template\s{0,}"(.*?)".*?}}`)
-	match := reg.FindAllStringSubmatch(string(data), -1)
-	for _, v := range match {
+	matches := reg.FindAllStringSubmatch(string(data), -1)
+	for _, v := range matches {
 		if v == nil || v[1] == "" {
 			continue
 		}
-		tlook := t.Lookup(v[1])
-		if tlook != nil {
-			continue
-		}
-		deep_file := ViewRoot + "/" + v[1] + ViewExt
-		if deep_file == file {
+
+		subFile := ViewRoot + "/" + v[1] + ViewExt
+		if subFile == path {
 			continue
 		}
 
-		t, err = parseTemplate(t, deep_file)
+		*files = append(*files, subFile)
 
+		err = getAllFiles(subFile, files)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return t, nil
+	return nil
 }
 
+//func parseTemplate(tpl *template.Template, file string) (t *template.Template, err error) {
+//	data, _ := ioutil.ReadFile(file)
+//	fmt.Println("P--------------", file)
+//	t, err = tpl.Parse(string(data))
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	//TODO 功能重复??
+//	reg := regexp.MustCompile(`{{\s{0,}template\s{0,}"(.*?)".*?}}`)
+//	match := reg.FindAllStringSubmatch(string(data), -1)
+//	for _, v := range match {
+//		if v == nil || v[1] == "" {
+//			continue
+//		}
+//
+//		fmt.Println("X--------------", v[1], file)
+//		tlook := t.Lookup(v[1])
+//		if tlook != nil {
+//			continue
+//		}
+//		deep_file := ViewRoot + "/" + v[1] + ViewExt
+//		fmt.Println("Y--------------", deep_file, file)
+//		if deep_file == file {
+//			continue
+//		}
+//
+//		t, err = parseTemplate(t, deep_file)
+//		if err != nil {
+//			return nil, err
+//		}
+//	}
+//	return t, nil
+//}
 
-var date_replace_pattern = []string{
+//go风格的时间格式替换
+var goDateReplacePattern = []string{
 	// year
 	"Y", "2006", // A full numeric representation of a year, 4 digits   Examples: 1999 or 2003
 	"y", "06", //A two digit representation of a year   Examples: 99 or 03
@@ -192,13 +240,13 @@ var date_replace_pattern = []string{
 }
 
 func StrToTime(dateString, format string) (time.Time, error) {
-	replacer := strings.NewReplacer(date_replace_pattern...)
+	replacer := strings.NewReplacer(goDateReplacePattern...)
 	format = replacer.Replace(format)
 	return time.ParseInLocation(format, dateString, time.Local)
 }
 
 func Date(format string, t time.Time) string {
-	replacer := strings.NewReplacer(date_replace_pattern...)
+	replacer := strings.NewReplacer(goDateReplacePattern...)
 	format = replacer.Replace(format)
 	return t.Format(format)
 }
