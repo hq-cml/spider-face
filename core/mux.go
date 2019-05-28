@@ -30,7 +30,8 @@ type HandlerMux struct {
 
 //create Application object
 func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
-		logger SpiderLogger, customErrHtmls map[int]string) (*HandlerMux, error) {
+		logger SpiderLogger, customErrHtmls map[int]string,
+		rewriteRule map[string]string) (*HandlerMux, error) {
 
 	//初始化用户自定义的错误页面,如果有
 	customErrHtml := map[int]string{}
@@ -51,11 +52,9 @@ func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
 
 	//生成rewriter
 	mux.rewriter = NewRewriter(logger)
-	//TODO
-	mux.rewriter.RegRewriteRule(map[string]string {
-		"/test/rewrite": "/index?name=123",
-		"/test/rewrite/(.*)/(.*)": "/index?id=[1]&name=[2]",
-	})
+
+	//注册重写规则
+	mux.rewriter.RegisterRewriteRule(rewriteRule)
 
 	//init mime
 	//initMime()

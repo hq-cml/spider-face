@@ -31,7 +31,7 @@ func NewRewriter(logger SpiderLogger) *Rewriter {
 // This most like nginx rewrite module
 // Support regex
 // This is different from controller rewrite-routerManger
-func (rwt *Rewriter)RegRewriteRule(list map[string]string) {
+func (rwt *Rewriter) RegisterRewriteRule(list map[string]string) {
 	for p, m := range list {
 		if strings.Index(p, "(") < 0 {
 			rwt.StaticRewrite[p] = m
@@ -77,7 +77,7 @@ func (rwt *Rewriter)TryMatchRewrite(r *http.Request) {
 			rewriteUrl = rewrite.match
 			//改写参数搬移
 			for i := 1; i < matchCnt; i++ {
-				replaceVal := "[" + strconv.Itoa(i) + "]"
+				replaceVal := "$" + strconv.Itoa(i)
 				rewriteUrl = strings.Replace(rewriteUrl, replaceVal, matches[0][i], -1)
 			}
 			break
@@ -90,7 +90,7 @@ func (rwt *Rewriter)TryMatchRewrite(r *http.Request) {
 	}
 
 	//实施改写: 直接变更request.URL的值!!
-	rwt.logger.Infof("Before Rewrite. UrlPath: %s, RawQuery: %s", urlPath, r.URL.RawQuery)
+	rwt.logger.Infof("Before Rewrite. UrlPath: '%s', RawQuery: '%s'", urlPath, r.URL.RawQuery)
 	uriMap := strings.SplitN(rewriteUrl, "?", 2)
 	if len(uriMap) == 2 {
 		r.URL.Path = uriMap[0]
@@ -98,5 +98,5 @@ func (rwt *Rewriter)TryMatchRewrite(r *http.Request) {
 	} else {
 		r.URL.Path = uriMap[0]
 	}
-	rwt.logger.Infof("After Rewrite. UrlPath: %s, RawQuery: %s", r.URL.Path, r.URL.RawQuery)
+	rwt.logger.Infof("After Rewrite. UrlPath: '%s', RawQuery: '%s'", r.URL.Path, r.URL.RawQuery)
 }

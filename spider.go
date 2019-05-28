@@ -44,9 +44,13 @@ func NewSpider(sConfig *core.SpiderConfig,
 
 	//TODO
 	customErrHtml := map[int]string{}
+	rewriteRule := map[string]string {
+		"/test/rewrite": "/index?name=123",
+		"/test/rewrite/(.*)/(.*)": "/index?id=$1&name=$2",
+	}
 
 	//创建serverMux
-	mux, err := core.NewHandlerMux(sConfig, controllerMap, logger, customErrHtml)
+	mux, err := core.NewHandlerMux(sConfig, controllerMap, logger, customErrHtml, rewriteRule)
 	if err != nil {
 		return nil, err
 	}
