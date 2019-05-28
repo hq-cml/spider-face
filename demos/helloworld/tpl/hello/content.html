@@ -1,5 +1,4 @@
-{{define "content"}}
-
+{{define "hello/content"}}
 <h1>:)</h1>
 <p>hello spider~</p>
 <br>
@@ -10,8 +9,9 @@
     当前时间: {{date "Y-m-d H:i:s" .nowtime}} <!-- 自定义函数date -->
     <br>
     路径传参: {{.id}}
+    <br>
     GET传参: {{.name}}
+    <br>
     post传参: {{.age}}
 </h3>
-
 {{end}}

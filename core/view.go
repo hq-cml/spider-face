@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ViewRoot      string
+	ViewPathRoot  string
 	ViewExt       string = ".html"
 	ViewTemplates map[string]*template.Template
 	templateFiles map[string]string
@@ -22,7 +22,8 @@ var (
 )
 
 type View struct {
-	data map[interface{}]interface{}
+	logger  SpiderLogger
+	data 	map[interface{}]interface{}
 }
 
 func init() {
@@ -32,24 +33,24 @@ func init() {
 	viewFunc["time"] = Time
 }
 
-func NewView() *View {
-	return &View{}
-}
-
-func (this *View) Assign(key interface{}, value interface{}) {
-	if this.data == nil {
-		this.data = make(map[interface{}]interface{})
-		this.data[key] = value
-	} else {
-		this.data[key] = value
+func NewView(logger SpiderLogger) *View {
+	return &View{
+		logger: logger,
 	}
 }
 
-func (this *View) Render(viewPathName string) ([]byte, error) {
-	if ViewRoot == "" {
+func (vi *View) Assign(key interface{}, value interface{}) {
+	if vi.data == nil {
+		vi.data = make(map[interface{}]interface{})
+	}
+	vi.data[key] = value
+}
+
+func (vi *View) Render(viewName string) ([]byte, error) {
+	if ViewPathRoot == "" {
 		return []byte(""), errors.New("TplPath not set")
 	}
-	viewPathName = strings.ToLower(viewPathName)
+	viewName = strings.ToLower(viewName)
 	//TODO
 	//if RunMod == "dev" {
 	//	t := template.New(view_name).Delims("{{", "}}").Funcs(view_func)
@@ -60,16 +61,21 @@ func (this *View) Render(viewPathName string) ([]byte, error) {
 	//	ViewTemplates[view_name] = t
 	//}
 
-	if tpl, ok := ViewTemplates[viewPathName]; ok == false {
-		return []byte(""), errors.New("template " + ViewRoot + "/" + viewPathName + ViewExt + " not found or compile failed")
+	if tpl, exist := ViewTemplates[viewName]; !exist {
+		return []byte(""), errors.New("template " + ViewPathRoot + "/" + viewName + ViewExt + " not found or compile failed")
 	} else {
-		html_content_bytes := bytes.NewBufferString("")
-		err := tpl.ExecuteTemplate(html_content_bytes, viewPathName, this.data)
+		htmlContentBytes := bytes.NewBufferString("")
+		err := tpl.ExecuteTemplate(htmlContentBytes, viewName, vi.data)
 		if err != nil {
+			vi.logger.Errf("ExecuteTemplate Error:%v", err)
 			return []byte(""), err
 		}
-		html_content, _ := ioutil.ReadAll(html_content_bytes)
-		return html_content, nil
+		content, err := ioutil.ReadAll(htmlContentBytes)
+		if err != nil {
+			vi.logger.Errf("ReadAll Error:%v", err)
+			return []byte(""), err
+		}
+		return content, nil
 	}
 }
 
@@ -78,11 +84,12 @@ func AddViewFunc(key string, func_name interface{}) {
 	viewFunc[key] = func_name
 }
 
-func InitViewTemplate(viewRoot string) error {
+func InitViewTemplate(viewRoot string, logger SpiderLogger) error {
 	if viewRoot == "" {
+		logger.Info("ViewPathRoot is nil~")
 		return nil
 	}
-	ViewRoot = viewRoot
+	ViewPathRoot = viewRoot
 	templateFiles = make(map[string]string)
 
 	filepath.Walk(viewRoot, func(path string, f os.FileInfo, err error) error {
@@ -96,7 +103,7 @@ func InitViewTemplate(viewRoot string) error {
 			return nil
 		}
 
-		fileName := strings.Trim(strings.Replace(path, ViewRoot, "", 1), "/")
+		fileName := strings.Trim(strings.Replace(path, ViewPathRoot, "", 1), "/")
 		templateFiles[strings.TrimSuffix(fileName, ViewExt)] = path
 		return nil
 	})
@@ -105,7 +112,7 @@ func InitViewTemplate(viewRoot string) error {
 	ViewTemplates = make(map[string]*template.Template)
 	for name, filePath := range templateFiles {
 		if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {
-			fmt.Printf("parse template %q err : %q", filePath, err)
+			logger.Warnf("parse template %q err : %q", filePath, err)
 			continue
 		}
 
@@ -113,29 +120,30 @@ func InitViewTemplate(viewRoot string) error {
 		tpl := template.New(name).Delims("{{", "}}").Funcs(viewFunc)
 
 		//解析模板
-		fmt.Println("\n\nQ----------------")
-		//t, err := parseTemplate(t, filePath)
-		//if err != nil || t == nil {
-		//	continue
-		//}
-
-		files := []string{}
-		err := getAllFiles(filePath, &files)
+		subFiles := []string{}
+		err := findSubFiles(filePath, &subFiles)
 		if err != nil {
+			logger.Fatal("findSubFiles Error:", err)
 			panic(err)
 		}
-		tpl, err = tpl.ParseFiles(files...)
+		tpl, err = tpl.ParseFiles(subFiles...)
 		if err != nil {
+			logger.Fatal("ParseFiles Error:", err)
 			panic(err)
 		}
 		ViewTemplates[name] = tpl
+		logger.Infof("Load parse:%s=> %s", name, filePath)
 	}
 
 	return nil
 }
 
-func getAllFiles(path string, files *[]string) error {
-	*files = append(*files, path)
+//找到文件对应的全部嵌套子模板
+func findSubFiles(path string, files *[]string) error {
+	if !sliceContain(*files, path) {
+		*files = append(*files, path)
+	}
+
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -148,57 +156,28 @@ func getAllFiles(path string, files *[]string) error {
 			continue
 		}
 
-		subFile := ViewRoot + "/" + v[1] + ViewExt
-		if subFile == path {
-			continue
+		subFile := ViewPathRoot + "/" + v[1] + ViewExt
+		if !sliceContain(*files, subFile) {
+			*files = append(*files, subFile)
 		}
 
-		*files = append(*files, subFile)
-
-		err = getAllFiles(subFile, files)
+		err = findSubFiles(subFile, files)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
+func sliceContain(ss []string, s string) bool {
+	for _, v := range ss {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
 
-//func parseTemplate(tpl *template.Template, file string) (t *template.Template, err error) {
-//	data, _ := ioutil.ReadFile(file)
-//	fmt.Println("P--------------", file)
-//	t, err = tpl.Parse(string(data))
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	//TODO 功能重复??
-//	reg := regexp.MustCompile(`{{\s{0,}template\s{0,}"(.*?)".*?}}`)
-//	match := reg.FindAllStringSubmatch(string(data), -1)
-//	for _, v := range match {
-//		if v == nil || v[1] == "" {
-//			continue
-//		}
-//
-//		fmt.Println("X--------------", v[1], file)
-//		tlook := t.Lookup(v[1])
-//		if tlook != nil {
-//			continue
-//		}
-//		deep_file := ViewRoot + "/" + v[1] + ViewExt
-//		fmt.Println("Y--------------", deep_file, file)
-//		if deep_file == file {
-//			continue
-//		}
-//
-//		t, err = parseTemplate(t, deep_file)
-//		if err != nil {
-//			return nil, err
-//		}
-//	}
-//	return t, nil
-//}
-
-//go风格的时间格式替换
+//go风格=>PHP风格 的的时间格式替换
 var goDateReplacePattern = []string{
 	// year
 	"Y", "2006", // A full numeric representation of a year, 4 digits   Examples: 1999 or 2003
