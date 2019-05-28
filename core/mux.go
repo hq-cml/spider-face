@@ -48,8 +48,10 @@ func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
 
 	//生成rewriter
 	mux.rewriter = NewRewriter(logger)
+	//TODO
 	mux.rewriter.RegRewriteRule(map[string]string {
-		"/test/rewrite": "index",
+		"/test/rewrite": "/index?name=123",
+		"/test/rewrite/(.*)/(.*)": "/index?id=[1]&name=[2]",
 	})
 
 	//init mime
@@ -117,9 +119,9 @@ func (mux *HandlerMux) ValueOfController(controllerName string) (reflect.Value, 
 func (mux *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//start_time := time.Now()
 
-	//TODO rewrite
+	//尝试匹配rewrite规则
 	if r.URL.Path != "/" {
-		mux.rewriter.MatchRewrite(r)
+		mux.rewriter.TryMatchRewrite(r)
 	}
 
 	mux.DispatchHandler(w, r)
@@ -185,7 +187,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	if !b {
 		panic("Oh my god")
 	}
-	c.Init(request, response)
+	c.Init(request, response, mux.logger)
 	c.SetName(controllerName)
 	c.SetAction(actionName)
 

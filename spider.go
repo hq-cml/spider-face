@@ -54,11 +54,18 @@ func NewSpider(sConfig *core.SpiderConfig,
 		Handler: mux,
 	}
 
+	//创建spider实例
 	spd := &Spider {
 		Config: sConfig,
 		MuxHander: mux,
 		HttpServer: server,
 		logger : logger,
+	}
+
+	//初始化解析视图模板
+	err = core.InitViewTemplate(spd.Config.TplPath, spd.logger)
+	if err != nil {
+		return nil, err
 	}
 
 	spd.logger.Info("Spider init success!")
@@ -67,9 +74,6 @@ func NewSpider(sConfig *core.SpiderConfig,
 }
 
 func (spd *Spider) Run() {
-	//初始化解析视图模板
-	core.InitViewTemplate(spd.Config.TplPath)
-
 	//信号处理函数
 	//go srv.signalHandle()
 

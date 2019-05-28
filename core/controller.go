@@ -14,7 +14,7 @@ type Controller interface {
 	GetRouter() []ControllerRouter
 
 	//Spider提供, 获取Controller的实时状态用于任务分发场景
-	Init(request *Request, response *Response) bool
+	Init(request *Request, response *Response, logger SpiderLogger) bool
 	SetName(name string)
 	GetName() string
 	SetAction(name string)
@@ -39,10 +39,10 @@ type ControllerRouter struct {
 	Action string
 }
 
-func (rc *RuntimeController) Init(request *Request, response *Response) bool {
+func (rc *RuntimeController) Init(request *Request, response *Response, logger SpiderLogger) bool {
 	rc.request = request
 	rc.response = response
-	rc.view = NewView()
+	rc.view = NewView(logger)
 
 	return true
 }

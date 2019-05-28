@@ -5,14 +5,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"fmt"
 )
 
-//TODO 待测试
 type Rewriter struct {
 	logger        SpiderLogger
-	rewriteRegexp []*RegexRewriteRule
-	rewriteStatic map[string]string
+	RegexpRewrite []*RegexRewriteRule
+	StaticRewrite map[string]string
 }
 
 type RegexRewriteRule struct {
@@ -24,82 +22,81 @@ type RegexRewriteRule struct {
 func NewRewriter(logger SpiderLogger) *Rewriter {
 	return &Rewriter{
 		logger: logger,
-		rewriteRegexp : []*RegexRewriteRule{},
-		rewriteStatic : map[string]string{},
+		RegexpRewrite : []*RegexRewriteRule{},
+		StaticRewrite : map[string]string{},
 	}
 }
+
+//注册rewrite规则
 // This most like nginx rewrite module
 // Support regex
 // This is different from controller rewrite-routerManger
 func (rwt *Rewriter)RegRewriteRule(list map[string]string) {
 	for p, m := range list {
 		if strings.Index(p, "(") < 0 {
-			rwt.rewriteStatic[p] = m
-			continue
+			rwt.StaticRewrite[p] = m
+		} else {
+			r := regexp.MustCompile(p)
+			if r == nil {
+				continue
+			}
+			reg := &RegexRewriteRule{
+				pattern: p,
+				match:   m,
+				regex:   r,
+			}
+			rwt.RegexpRewrite = append(rwt.RegexpRewrite, reg)
 		}
-		r := regexp.MustCompile(p)
-		if r == nil {
-			continue
-		}
-		reg := &RegexRewriteRule{
-			pattern: p,
-			match:   m,
-			regex:   r,
-		}
-		rwt.rewriteRegexp = append(rwt.rewriteRegexp, reg)
 	}
 }
 
-// Match rewrite
-// Note that this will change URL.RawQuery
-// and URL.Path in http.Request
-func (rwt *Rewriter)MatchRewrite(r *http.Request) {
+// Try to Match rewrite
+// Note :
+// that this will change URL.RawQuery
+// and URL.Path in http.Request !!!
+func (rwt *Rewriter)TryMatchRewrite(r *http.Request) {
 	urlPath := r.URL.Path
-	var rewrite_url string = ""
+	var rewriteUrl string = ""
 	var exist bool
 
-	fmt.Println("Before rewrite urlPath-----", urlPath)
-	if rewrite_url, exist = rwt.rewriteStatic[urlPath]; exist {
-		goto RESET_URI
+	_, exist = rwt.StaticRewrite[urlPath]
+	if exist {
+		rewriteUrl = rwt.StaticRewrite[urlPath]
+	} else {
+		for _, rewrite := range rwt.RegexpRewrite {
+			matches := rewrite.regex.FindAllStringSubmatch(urlPath, -1)
+			if matches == nil {
+				continue
+			}
+			matchCnt := len(matches[0])
+			if matchCnt == 1 { //完全匹配, 没什么要改写的了
+				return
+			}
+
+			//获取改写后的值
+			rewriteUrl = rewrite.match
+			//改写参数搬移
+			for i := 1; i < matchCnt; i++ {
+				replaceVal := "[" + strconv.Itoa(i) + "]"
+				rewriteUrl = strings.Replace(rewriteUrl, replaceVal, matches[0][i], -1)
+			}
+			break
+		}
 	}
 
-	for _, rewrite := range rwt.rewriteRegexp {
-		fmt.Println("B--------")
-		match := rewrite.regex.FindAllStringSubmatch(urlPath, -1)
-		if match == nil {
-			continue
-		}
-		match_cnt := len(match[0])
-		if match_cnt == 1 {
-			return
-		}
-
-		rewrite_url = rewrite.match
-
-		for n := 1; n < match_cnt; n++ {
-			replace_val := "[" + strconv.Itoa(n) + "]"
-			rewrite_url = strings.Replace(rewrite_url, replace_val, match[0][n], -1)
-		}
-		break
-	}
-	if rewrite_url == "" {
-		fmt.Println("C--------")
+	//没有改写必要
+	if rewriteUrl == "" {
 		return
 	}
 
-	RESET_URI:
-	fmt.Println("rewrite_url_1:", rewrite_url)
-	rewrite_url = strings.Replace(rewrite_url, "[args]", r.URL.RawQuery, -1)
-	fmt.Println("rewrite_url_2:", rewrite_url)
-	uri_map := strings.SplitN(rewrite_url, "?", 2)
-
-	if len(uri_map) == 2 {
-		r.URL.Path = uri_map[0]
-		r.URL.RawQuery = uri_map[1]
-		fmt.Println("X-----", r.URL.Path)
-		fmt.Println("X-----", r.URL.RawQuery)
+	//实施改写: 直接变更request.URL的值!!
+	rwt.logger.Infof("Before Rewrite. UrlPath: %s, RawQuery: %s", urlPath, r.URL.RawQuery)
+	uriMap := strings.SplitN(rewriteUrl, "?", 2)
+	if len(uriMap) == 2 {
+		r.URL.Path = uriMap[0]
+		r.URL.RawQuery = uriMap[1]
 	} else {
-		r.URL.Path = uri_map[0]
-		fmt.Println("Y-----", r.URL.Path)
+		r.URL.Path = uriMap[0]
 	}
+	rwt.logger.Infof("After Rewrite. UrlPath: %s, RawQuery: %s", r.URL.Path, r.URL.RawQuery)
 }
