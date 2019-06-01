@@ -14,9 +14,9 @@ type Rewriter struct {
 }
 
 type RegexRewriteRule struct {
-	pattern string
-	match   string
-	regex   *regexp.Regexp
+	pattern    string
+	rewriteUrl string
+	regex      *regexp.Regexp
 }
 
 func NewRewriter(logger SpiderLogger) *Rewriter {
@@ -41,9 +41,9 @@ func (rwt *Rewriter) RegisterRewriteRule(list map[string]string) {
 				continue
 			}
 			reg := &RegexRewriteRule{
-				pattern: p,
-				match:   m,
-				regex:   r,
+				pattern:    p,
+				rewriteUrl: m,
+				regex:      r,
 			}
 			rwt.RegexpRewrite = append(rwt.RegexpRewrite, reg)
 		}
@@ -74,8 +74,8 @@ func (rwt *Rewriter)TryMatchRewrite(r *http.Request) {
 			}
 
 			//获取改写后的值
-			rewriteUrl = rewrite.match
-			//改写参数搬移
+			rewriteUrl = rewrite.rewriteUrl
+			//改写参数，逐个迁移到改写后的值上面
 			for i := 1; i < matchCnt; i++ {
 				replaceVal := "$" + strconv.Itoa(i)
 				rewriteUrl = strings.Replace(rewriteUrl, replaceVal, matches[0][i], -1)

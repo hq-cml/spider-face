@@ -29,7 +29,7 @@ type HandlerMux struct {
 }
 
 //create Application object
-func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
+func NewHandlerMux(sConfig *SpiderConfig, controllers []Controller,
 		logger SpiderLogger, customErrHtmls map[int]string,
 		rewriteRule map[string]string) (*HandlerMux, error) {
 
@@ -63,19 +63,28 @@ func NewHandlerMux(sConfig *SpiderConfig, controllerMap map[string]Controller,
 	mux.routerManger = NewRouterManager(logger)
 
 	//注册控制器
-	err := mux.RegisterController(controllerMap)
+	err := mux.RegisterController(controllers)
 	if err != nil {
 		return nil, err
 	}
 
-	mux.logger.Info("Server mux done~")
+	mux.logger.Info("ServerMux Init ~")
 	return mux, nil
 }
 
 //注册控制器
 //TODO 应该有个默认的Controller
-func (mux *HandlerMux) RegisterController(controllerMap map[string]Controller) error {
-	for name, controller := range controllerMap {
+func (mux *HandlerMux) RegisterController(controllers []Controller) error {
+	for _, controller := range controllers {
+		//获取controller的名字
+		typ := reflect.Indirect(reflect.ValueOf(controller)).Type()
+		if strings.Index(typ.Name(), "Controller") == -1 {
+			return errors.New("Invalid Controller Name! Must End with 'Controller'")
+		}
+		//name := strings.ToLower(strings.TrimSuffix(typ.Name(), "Controller"))
+		name := strings.TrimSuffix(typ.Name(), "Controller")
+
+		fmt.Println("A-----------", name)
 		//验重
 		if _, exist := mux.controllerMap[name]; exist {
 			mux.logger.Errf("Conflicting controller: %v", name)
@@ -102,6 +111,7 @@ func (mux *HandlerMux) RegisterController(controllerMap map[string]Controller) e
 func (mux *HandlerMux) ValueOfController(controllerName string) (reflect.Value, error) {
 	var valueOfController reflect.Value
 
+	fmt.Println("B------------", controllerName)
 	typeOfController, exist := mux.controllerMap[controllerName];
 	if !exist {
 		//http 404

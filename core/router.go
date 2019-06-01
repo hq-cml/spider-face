@@ -19,7 +19,6 @@ type RouterManager struct {
 type RouterNode struct {
 	UrlParts   []PathPartition
 	NormalNum  int             //整个path中normal段的数量
-	Method     string
 	Controller string
 	Action     string
 }
@@ -55,10 +54,10 @@ func (rtm *RouterManager) RegisterRouter(controllerName string, controller Contr
 		action := router.Action
 
 		method = strings.ToUpper(method)
-		if old, exist := rtm.UniqKeyMap[method+" "+pattern]; exist {
+		if old, exist := rtm.UniqKeyMap[method + " " + pattern]; exist {
 			return errors.New("Can't register router" + method + " " + pattern + ". it had been registed in controller:" + old)
 		}
-		node, err := genRouterNode(method, pattern, controllerName, action)
+		node, err := genRouterNode(pattern, controllerName, action)
 		if err != nil {
 			return err
 		}
@@ -73,7 +72,7 @@ func (rtm *RouterManager) RegisterRouter(controllerName string, controller Contr
 }
 
 // create rewrite RouterNode
-func genRouterNode(method, pattern, controller, action string) (*RouterNode, error) {
+func genRouterNode(pattern, controller, action string) (*RouterNode, error) {
 	if pattern == "" || action == "" {
 		return nil, nil
 	}
@@ -82,7 +81,6 @@ func genRouterNode(method, pattern, controller, action string) (*RouterNode, err
 	router := &RouterNode{
 		UrlParts:   nil,
 		NormalNum:  0,
-		Method:     method,
 		Controller: controller,
 		Action:     action,
 	}

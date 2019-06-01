@@ -1,10 +1,10 @@
 package spider
 
 import (
+	"fmt"
 	"net/http"
 	"errors"
 	"github.com/hq-cml/spider-face/core"
-	"fmt"
 	"github.com/hq-cml/spider-face/utils/helper"
 	"github.com/hq-cml/spider-face/utils/log"
 )
@@ -19,7 +19,7 @@ type Spider struct {
 
 //创建spider实例
 func NewSpider(sConfig *core.SpiderConfig,
-		controllerMap map[string]core.Controller, logger core.SpiderLogger) (*Spider, error) {
+		controllers []core.Controller, logger core.SpiderLogger) (*Spider, error) {
 
 	if sConfig.BindAddr == "" {
 		return nil, errors.New("server Addr can't be empty...[ip:port]")
@@ -50,7 +50,7 @@ func NewSpider(sConfig *core.SpiderConfig,
 	}
 
 	//创建serverMux
-	mux, err := core.NewHandlerMux(sConfig, controllerMap, logger, customErrHtml, rewriteRule)
+	mux, err := core.NewHandlerMux(sConfig, controllers, logger, customErrHtml, rewriteRule)
 	if err != nil {
 		return nil, err
 	}
