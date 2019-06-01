@@ -50,7 +50,7 @@ func (rtm *RouterManager) RegisterRouter(controllerName string, controller Contr
 
 	for _, router := range routers {
 		method := router.Method
-		pattern := router.Pattern
+		pattern := router.Location
 		action := router.Action
 
 		method = strings.ToUpper(method)

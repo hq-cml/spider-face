@@ -34,9 +34,9 @@ type RuntimeController struct {
 }
 
 type ControllerRouter struct {
-	Method string
-	Pattern string
-	Action string
+	Method   string
+	Location string
+	Action   string
 }
 
 func (rc *RuntimeController) Init(request *Request, response *Response, logger SpiderLogger) bool {

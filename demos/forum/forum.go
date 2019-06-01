@@ -52,13 +52,13 @@ func (hello *HelloController) PostAction() {
 
 func (hello *HelloController) GetRouter() []core.ControllerRouter {
 	return []core.ControllerRouter{
-		{Method:"GET", Pattern:"/hello/:id", Action: "IndexAction",},
-		{Method:"GET", Pattern: "/hello", Action:"HelloAction",},
-		{Method:"GET", Pattern: "/index", Action:"IndexAction",},
-		{Method:"GET", Pattern: "/index/:id", Action:"IndexAction",},
-		{Method:"GET", Pattern: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
-		{Method:"POST", Pattern: "/index/post", Action:"PostAction",},
-		{Method:"GET", Pattern: "/json", Action:"JsonAction",},
+		{Method:"GET", Location:"/hello/:id", Action: "IndexAction",},
+		{Method:"GET", Location: "/hello", Action:"HelloAction",},
+		{Method:"GET", Location: "/index", Action:"IndexAction",},
+		{Method:"GET", Location: "/index/:id", Action:"IndexAction",},
+		{Method:"GET", Location: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
+		{Method:"POST", Location: "/index/post", Action:"PostAction",},
+		{Method:"GET", Location: "/json", Action:"JsonAction",},
 	}
 }
 

@@ -38,7 +38,7 @@ func (hello *HelloController) HelloAction() {
 
 func (hello *HelloController) GetRouter() []core.ControllerRouter {
 	return []core.ControllerRouter{
-		{Method:"GET", Pattern: "/hello", Action:"HelloAction",},
+		{Method:"GET", Location: "/hello", Action:"HelloAction",},
 	}
 }
 
@@ -77,13 +77,13 @@ func (hello *HelloController) GetRouter() []core.ControllerRouter {
 //
 //func (hello *HelloController) GetRouter() []core.ControllerRouter {
 //	return []core.ControllerRouter{
-//		{Method:"GET", Pattern:"/hello/:id", Action: "IndexAction",},
-//		{Method:"GET", Pattern: "/hello", Action:"HelloAction",},
-//		{Method:"GET", Pattern: "/index", Action:"IndexAction",},
-//		{Method:"GET", Pattern: "/index/:id", Action:"IndexAction",},
-//		{Method:"GET", Pattern: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
-//		{Method:"POST", Pattern: "/index/post", Action:"PostAction",},
-//		{Method:"GET", Pattern: "/json", Action:"JsonAction",},
+//		{Method:"GET", Location:"/hello/:id", Action: "IndexAction",},
+//		{Method:"GET", Location: "/hello", Action:"HelloAction",},
+//		{Method:"GET", Location: "/index", Action:"IndexAction",},
+//		{Method:"GET", Location: "/index/:id", Action:"IndexAction",},
+//		{Method:"GET", Location: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
+//		{Method:"POST", Location: "/index/post", Action:"PostAction",},
+//		{Method:"GET", Location: "/json", Action:"JsonAction",},
 //	}
 //}
 
@@ -98,12 +98,18 @@ func main() {
 	}
 
 	//生成实例
-	spd, err := spider.NewSpider(sConfig, controllers, nil)
+	spd, err := spider.NewSpider(sConfig, nil)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
+	//注册controller
+	err = spd.RegisterController(controllers)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	//spd.GET("/hello", func() {
 	//	hello.Echo("hello world!")
