@@ -4,7 +4,6 @@ package core
  * 实现自己的多路复用器
  * 它会替换掉golang默认的DefaultServerMux，是Spider的核心
  */
-
 import (
 	"net/http"
 	"reflect"
@@ -44,14 +43,11 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger,
 	GlobalConf = sConfig
 
 	//生成mux
-	mux := &HandlerMux{
+	mux := &HandlerMux {
 		logger: logger,
 		customErrHtml:customErrHtml,
 		controllerMap: map[string]reflect.Type{},
-		DefController: &DefaultController{
-			routers:    []ControllerRouter{},
-			funcMapGet: map[string]ActionFunc{},
-		},
+		DefController: NewDefaultController(),
 	}
 
 	//生成rewriter
@@ -185,8 +181,6 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	request.pathParams = pathParam
 
-	fmt.Println("AAAAAAAAAAAAAAAA-----------------", controllerName)
-
 	if controllerName == "Default" {
 		mux.handleDefaultController(request, response, controllerName, actionName)
 	} else {
@@ -200,10 +194,29 @@ func (mux *HandlerMux) handleDefaultController(request *Request, response *Respo
 	controllerName, actionName string) {
 	defController := DefaultController {
 		funcMapGet: mux.DefController.(*DefaultController).funcMapGet,
+		funcMapPost: mux.DefController.(*DefaultController).funcMapPost,
+		funcMapPut: mux.DefController.(*DefaultController).funcMapPut,
+		funcMapDelete: mux.DefController.(*DefaultController).funcMapDelete,
 	}
 
 	defController.Init(request, response, mux.logger)
-	defController.DefaultGetAction()
+
+	switch request.GetMethod() {
+	case "GET":
+		defController.DefaultGetAction()
+	case "POST":
+		defController.DefaultPostAction()
+	case "PUT":
+		defController.DefaultPutAction()
+	case "DELETE":
+		defController.DefaultDeleteAction()
+	default:
+		defController.DefaultGetAction()
+	}
+
+
+	//TODO beforeAction
+	//TODO afterAction
 }
 
 func (mux *HandlerMux) handleNormalController(request *Request, response *Response,

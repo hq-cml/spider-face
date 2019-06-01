@@ -2,38 +2,97 @@ package core
 
 import "fmt"
 
+type ActionFunc func(c Controller)
+
 //一个系统默认的controller，用于快捷注册
 type DefaultController struct {
 	RuntimeController
-	routers    []ControllerRouter
-	funcMapGet  map[string]ActionFunc
+	routers    		[]ControllerRouter
+
+	funcMapGet  	map[string]ActionFunc
+	funcMapPost  	map[string]ActionFunc
+	funcMapPut  	map[string]ActionFunc
+	funcMapDelete   map[string]ActionFunc
+}
+
+func NewDefaultController() *DefaultController {
+	return &DefaultController{
+		routers:    	 []ControllerRouter{},
+		funcMapGet:		 map[string]ActionFunc{},
+		funcMapPost:	 map[string]ActionFunc{},
+		funcMapPut: 	 map[string]ActionFunc{},
+		funcMapDelete:	 map[string]ActionFunc{},
+	}
 }
 
 func (def *DefaultController) DefaultGetAction() {
-	//def.Echo("hello world!")
-	fmt.Println("A-----------", def.UrlPath())
-	fmt.Println("B-----------", def.GetUri())
-
-	tmpFunc, ok := def.funcMapGet["/hello"]
+	tmpFunc, ok := def.funcMapGet[def.UrlPath()]
 	if ok {
 		tmpFunc(def)
 	} else {
-		fmt.Println("?????")
+		fmt.Println("404")
 	}
+}
 
+func (def *DefaultController) DefaultPostAction() {
+	tmpFunc, ok := def.funcMapPost[def.UrlPath()]
+	if ok {
+		tmpFunc(def)
+	} else {
+		fmt.Println("404")
+	}
+}
+
+func (def *DefaultController) DefaultPutAction() {
+	tmpFunc, ok := def.funcMapPut[def.UrlPath()]
+	if ok {
+		tmpFunc(def)
+	} else {
+		fmt.Println("404")
+	}
+}
+
+func (def *DefaultController) DefaultDeleteAction() {
+	tmpFunc, ok := def.funcMapDelete[def.UrlPath()]
+	if ok {
+		tmpFunc(def)
+	} else {
+		fmt.Println("404")
+	}
 }
 
 func (def *DefaultController) GetRouter() []ControllerRouter {
 	return def.routers
 }
 
-type ActionFunc func(c Controller)
-
 func (mux *HandlerMux) GET(location string , acFunc ActionFunc) {
 	defController := mux.DefController.(*DefaultController)
 	defController.routers = append(defController.routers, ControllerRouter {
 		Method:"GET", Location: location, Action:"DefaultGetAction",
 	})
-	fmt.Println("X-------------", location)
 	defController.funcMapGet[location] = acFunc
+}
+
+func (mux *HandlerMux) POST(location string , acFunc ActionFunc) {
+	defController := mux.DefController.(*DefaultController)
+	defController.routers = append(defController.routers, ControllerRouter {
+		Method:"POST", Location: location, Action:"DefaultPostAction",
+	})
+	defController.funcMapPost[location] = acFunc
+}
+
+func (mux *HandlerMux) PUT(location string , acFunc ActionFunc) {
+	defController := mux.DefController.(*DefaultController)
+	defController.routers = append(defController.routers, ControllerRouter {
+		Method:"PUT", Location: location, Action:"DefaultPutAction",
+	})
+	defController.funcMapPut[location] = acFunc
+}
+
+func (mux *HandlerMux) DELETE(location string , acFunc ActionFunc) {
+	defController := mux.DefController.(*DefaultController)
+	defController.routers = append(defController.routers, ControllerRouter {
+		Method:"DELETE", Location: location, Action:"DefaultDeleteAction",
+	})
+	defController.funcMapDelete[location] = acFunc
 }

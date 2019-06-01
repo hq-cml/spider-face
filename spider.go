@@ -129,6 +129,33 @@ func (spd *Spider) GET(location string , acFunc core.ActionFunc) {
 	mux.GET(location, acFunc)
 }
 
+func (spd *Spider) POST(location string , acFunc core.ActionFunc) {
+	//注册控制器
+	mux, ok := spd.MuxHander.(*core.HandlerMux)
+	if !ok {
+		panic("Wrong type of mux!")
+	}
+	mux.POST(location, acFunc)
+}
+
+func (spd *Spider) PUT(location string , acFunc core.ActionFunc) {
+	//注册控制器
+	mux, ok := spd.MuxHander.(*core.HandlerMux)
+	if !ok {
+		panic("Wrong type of mux!")
+	}
+	mux.PUT(location, acFunc)
+}
+
+func (spd *Spider) DELETE(location string , acFunc core.ActionFunc) {
+	//注册控制器
+	mux, ok := spd.MuxHander.(*core.HandlerMux)
+	if !ok {
+		panic("Wrong type of mux!")
+	}
+	mux.DELETE(location, acFunc)
+}
+
 //TODO
 //文件上传 ??
 //rewrite ??

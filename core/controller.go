@@ -20,6 +20,10 @@ type Controller interface {
 	SetAction(name string)
 	GetAction() string
 	Echo(content string)
+	Param(key string, defaultValue ...string) string
+	Display(viewPath ...string)
+	Assign(key interface{}, value interface{})
+
 }
 
 //实时controller，每次请求到来，都会动态生成一个controller实例
@@ -177,7 +181,7 @@ func (rc *RuntimeController) ReqBody() []byte {
 }
 
 //跳转
-func (rc *RuntimeController) Location(url string) {
+func (rc *RuntimeController) Redirect(url string) {
 	http.Redirect(rc.response.Writer, rc.request.request, url, 301)
 }
 
