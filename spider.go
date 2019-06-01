@@ -10,11 +10,10 @@ import (
 )
 
 type Spider struct {
-	HttpServer  *http.Server
-	MuxHander   http.Handler    //自定义的多路复用器, 替换原生DefaultServerMux, 本质上是一个Handler接口的实现
-	Config      *core.SpiderConfig
-
-	logger      core.SpiderLogger
+	HttpServer    *http.Server
+	MuxHander     http.Handler    //自定义的多路复用器, 替换原生DefaultServerMux, 本质上是一个Handler接口的实现
+	Config        *core.SpiderConfig
+	logger        core.SpiderLogger
 }
 
 //创建spider实例
@@ -94,6 +93,15 @@ func (spd *Spider) RegisterController(controllers []core.Controller) error {
 }
 
 func (spd *Spider) Run() {
+	//将Default注册到Mux中去
+	mux, ok := spd.MuxHander.(*core.HandlerMux)
+	if !ok {
+		panic("Wrong type of mux!")
+	}
+	spd.RegisterController([]core.Controller{
+		mux.DefController,
+	})
+
 	//信号处理函数
 	//go srv.signalHandle()
 
@@ -110,6 +118,15 @@ func (spd *Spider) Run() {
 	//serverStat = STATE_TERMINATE
 	//logger.RunLog("[Notice] Server shuttdown.")
 	return
+}
+
+func (spd *Spider) GET(location string , acFunc core.ActionFunc) {
+	//注册控制器
+	mux, ok := spd.MuxHander.(*core.HandlerMux)
+	if !ok {
+		panic("Wrong type of mux!")
+	}
+	mux.GET(location, acFunc)
 }
 
 //TODO

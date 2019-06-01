@@ -22,10 +22,11 @@ var (
 //多路复用器，用来替换掉golang默认的DefaultServerMux
 type HandlerMux struct {
 	logger        SpiderLogger
-	rewriter  	  *Rewriter
+	rewriter      *Rewriter
     customErrHtml map[int]string
 	routerManger  *RouterManager
 	controllerMap map[string]reflect.Type
+	DefController Controller
 }
 
 //create Application object
@@ -47,6 +48,10 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger,
 		logger: logger,
 		customErrHtml:customErrHtml,
 		controllerMap: map[string]reflect.Type{},
+		DefController: &DefaultController{
+			routers:    []ControllerRouter{},
+			funcMapGet: map[string]ActionFunc{},
+		},
 	}
 
 	//生成rewriter
@@ -66,7 +71,6 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger,
 }
 
 //注册控制器
-//TODO 应该有个默认的Controller
 func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 	for _, controller := range controllers {
 		//获取controller的名字
@@ -78,7 +82,8 @@ func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 		name := strings.TrimSuffix(typ.Name(), "Controller")
 
 		fmt.Println("A-----------", name)
-		//验重
+
+		//名字验重
 		if _, exist := mux.controllerMap[name]; exist {
 			mux.logger.Errf("Conflicting controller: %v", name)
 			return fmt.Errorf("Controller %q is existed!", name)
@@ -180,6 +185,29 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	request.pathParams = pathParam
 
+	fmt.Println("AAAAAAAAAAAAAAAA-----------------", controllerName)
+
+	if controllerName == "Default" {
+		mux.handleDefaultController(request, response, controllerName, actionName)
+	} else {
+		mux.handleNormalController(request, response, controllerName, actionName)
+	}
+
+	response.SetHeader("Connection", request.GetHeader("Connection"))
+}
+
+func (mux *HandlerMux) handleDefaultController(request *Request, response *Response,
+	controllerName, actionName string) {
+	defController := DefaultController {
+		funcMapGet: mux.DefController.(*DefaultController).funcMapGet,
+	}
+
+	defController.Init(request, response, mux.logger)
+	defController.DefaultGetAction()
+}
+
+func (mux *HandlerMux) handleNormalController(request *Request, response *Response,
+		controllerName, actionName string) {
 	valueOfController, err := mux.ValueOfController(controllerName)
 	if err != nil {
 		OutErrorHtml(response, request, http.StatusNotFound, mux.customErrHtml)
@@ -216,6 +244,4 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	for _, action := range actions {
 		action.Call(requestParams)
 	}
-
-	response.SetHeader("Connection", request.GetHeader("Connection"))
 }

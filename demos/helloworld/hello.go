@@ -28,19 +28,19 @@ import (
   }
  */
 
-type HelloController struct {
-	core.RuntimeController
-}
-
-func (hello *HelloController) HelloAction() {
-	hello.Echo("hello world!")
-}
-
-func (hello *HelloController) GetRouter() []core.ControllerRouter {
-	return []core.ControllerRouter{
-		{Method:"GET", Location: "/hello", Action:"HelloAction",},
-	}
-}
+//type HelloController struct {
+//	core.RuntimeController
+//}
+//
+//func (hello *HelloController) HelloAction() {
+//	hello.Echo("hello world!")
+//}
+//
+//func (hello *HelloController) GetRouter() []core.ControllerRouter {
+//	return []core.ControllerRouter{
+//		{Method:"GET", Location: "/hello", Action:"HelloAction",},
+//	}
+//}
 
 //func (hello *HelloController) JsonAction() {
 //	if hello.Param("encode") == "yes" {
@@ -87,9 +87,9 @@ func (hello *HelloController) GetRouter() []core.ControllerRouter {
 //	}
 //}
 
-var controllers = []core.Controller{
-	&HelloController{},
-}
+//var controllers = []core.Controller{
+//	&HelloController{},
+//}
 
 func main() {
 	//server config
@@ -105,15 +105,15 @@ func main() {
 	}
 
 	//注册controller
-	err = spd.RegisterController(controllers)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	//err = spd.RegisterController(controllers)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
 
-	//spd.GET("/hello", func() {
-	//	hello.Echo("hello world!")
-	//})
+	spd.GET("/hello", func(c core.Controller) {
+		c.Echo("Hello")
+	})
 
 	//Run
 	spd.Run()

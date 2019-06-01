@@ -19,6 +19,7 @@ type Controller interface {
 	GetName() string
 	SetAction(name string)
 	GetAction() string
+	Echo(content string)
 }
 
 //实时controller，每次请求到来，都会动态生成一个controller实例
