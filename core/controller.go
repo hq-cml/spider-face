@@ -1,10 +1,8 @@
 package core
 
-import (
-	"mime/multipart"
-	"net/http"
-	"fmt"
-)
+import "fmt"
+
+type ActionFunc func(rp Roundtrip)
 
 /*
  * Controller接口，规定了Spider中必需的合法的行为
@@ -17,187 +15,101 @@ type Controller interface {
 	Roundtrip
 }
 
-type Roundtrip interface {
-	Init(request *Request, response *Response, logger SpiderLogger) bool
-	SetName(name string)
-	GetName() string
-	SetAction(name string)
-	GetAction() string
-	Echo(content string)
-	Param(key string, defaultValue ...string) string
-	Display(viewPath ...string)
-	Assign(key interface{}, value interface{})
-}
-
-//实时controller，每次请求到来，都会动态生成一个controller实例
-//通过这个实例来控制逻辑处理、输入、输出
-//这个结构将会嵌入到所有的用户定制Controller对象中去
-type SpiderRoundtrip struct {
-	request  *Request
-	response *Response
-	view     *View
-
-	controllerName string
-	actionName     string
-}
-
 type ControllerRouter struct {
 	Method   string
 	Location string
 	Action   string
 }
 
-func (rp *SpiderRoundtrip) Init(request *Request, response *Response, logger SpiderLogger) bool {
-	rp.request = request
-	rp.response = response
-	rp.view = NewView(logger)
+//一个系统默认的controller，用于快捷注册
+type DefaultController struct {
+	SpiderRoundtrip
+	routers    		[]ControllerRouter
 
-	return true
+	funcMapGet  	map[string]ActionFunc
+	funcMapPost  	map[string]ActionFunc
+	funcMapPut  	map[string]ActionFunc
+	funcMapDelete   map[string]ActionFunc
 }
 
-func (rp *SpiderRoundtrip) SetName(name string) {
-	if name == "" {
-		return
+func NewDefaultController() *DefaultController {
+	return &DefaultController{
+		routers:    	 []ControllerRouter{},
+		funcMapGet:		 map[string]ActionFunc{},
+		funcMapPost:	 map[string]ActionFunc{},
+		funcMapPut: 	 map[string]ActionFunc{},
+		funcMapDelete:	 map[string]ActionFunc{},
 	}
-	rp.controllerName = name
 }
 
-func (rp *SpiderRoundtrip) GetName() string {
-	return rp.controllerName
-}
-
-func (rp *SpiderRoundtrip) SetAction(name string) {
-	if name == "" {
-		return
-	}
-	rp.actionName = name
-}
-
-func (rp *SpiderRoundtrip) GetAction() string {
-	return rp.actionName
-}
-
-func (rp *SpiderRoundtrip) Param(key string, defaultValue ...string) string {
-	v := rp.request.FindParam(key)
-	if v == "" && defaultValue != nil {
-		return defaultValue[0]
-	}
-	return v
-}
-
-//向页面模板引擎注册数据,待展示用
-func (rp *SpiderRoundtrip) Assign(key interface{}, value interface{}) {
-	rp.view.Assign(key, value)
-}
-
-//输出展示页面
-func (rp *SpiderRoundtrip) Display(viewPath ...string) {
-	bytes, err := rp.Render(viewPath...)
-
-	if err == nil {
-		rp.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-		rp.response.WriteBody(bytes)
+func (def *DefaultController) DefaultGetAction() {
+	tmpFunc, ok := def.funcMapGet[def.UrlPath()]
+	if ok {
+		tmpFunc(def)
 	} else {
-		rp.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-		rp.response.WriteBody([]byte(err.Error()))
+		fmt.Println("404")
 	}
 }
 
-func (rp *SpiderRoundtrip) Render(viewPath ...string) ([]byte, error) {
-	var viewPathName string
-	if viewPath == nil || viewPath[0] == "" {
-		viewPathName = rp.GetName() + "/" + rp.GetAction()
-		fmt.Println("viewName:", viewPathName)
+func (def *DefaultController) DefaultPostAction() {
+	tmpFunc, ok := def.funcMapPost[def.UrlPath()]
+	if ok {
+		tmpFunc(def)
 	} else {
-		viewPathName = viewPath[0]
-		fmt.Println("viewName_x:", viewPathName)
+		fmt.Println("404")
 	}
-	return rp.view.Render(viewPathName)
 }
 
-func (rp *SpiderRoundtrip) GetCookie(name string) string {
-	return rp.request.GetCookie(name)
+func (def *DefaultController) DefaultPutAction() {
+	tmpFunc, ok := def.funcMapPut[def.UrlPath()]
+	if ok {
+		tmpFunc(def)
+	} else {
+		fmt.Println("404")
+	}
 }
 
-func (rp *SpiderRoundtrip) GetUri() string {
-	return rp.request.GetUri()
+func (def *DefaultController) DefaultDeleteAction() {
+	tmpFunc, ok := def.funcMapDelete[def.UrlPath()]
+	if ok {
+		tmpFunc(def)
+	} else {
+		fmt.Println("404")
+	}
 }
 
-func (rp *SpiderRoundtrip) UrlPath() string {
-	return rp.request.UrlPath()
+func (def *DefaultController) GetAllRouters() []ControllerRouter {
+	return def.routers
 }
 
-func (rp *SpiderRoundtrip) GetClientIP() string {
-	return rp.request.GetClientIP()
+func (mux *HandlerMux) GET(location string , acFunc ActionFunc) {
+	defController := mux.DefController.(*DefaultController)
+	defController.routers = append(defController.routers, ControllerRouter {
+		Method:"GET", Location: location, Action:"DefaultGetAction",
+	})
+	defController.funcMapGet[location] = acFunc
 }
 
-func (rp *SpiderRoundtrip) Scheme() string {
-	return rp.request.Scheme()
+func (mux *HandlerMux) POST(location string , acFunc ActionFunc) {
+	defController := mux.DefController.(*DefaultController)
+	defController.routers = append(defController.routers, ControllerRouter {
+		Method:"POST", Location: location, Action:"DefaultPostAction",
+	})
+	defController.funcMapPost[location] = acFunc
 }
 
-func (rp *SpiderRoundtrip) Header(key string) string {
-	return rp.request.GetHeader(key)
+func (mux *HandlerMux) PUT(location string , acFunc ActionFunc) {
+	defController := mux.DefController.(*DefaultController)
+	defController.routers = append(defController.routers, ControllerRouter {
+		Method:"PUT", Location: location, Action:"DefaultPutAction",
+	})
+	defController.funcMapPut[location] = acFunc
 }
 
-func (rp *SpiderRoundtrip) SetHeader(key, value string) {
-	rp.response.SetHeader(key, value)
-}
-
-func (rp *SpiderRoundtrip) SetCookie(name string, value string, others ...interface{}) {
-	rp.response.SetCookie(name, value, others...)
-}
-
-func (rp *SpiderRoundtrip) Echo(content string) {
-	rp.OutputBytes([]byte(content))
-}
-
-func (rp *SpiderRoundtrip) OutputBytes(bytes []byte) {
-	rp.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-	rp.response.WriteBody(bytes)
-}
-
-func (rp *SpiderRoundtrip) OutputJson(data interface{}, coding ...bool) error {
-	return rp.response.Json(data, coding...)
-}
-
-func (rp *SpiderRoundtrip) OutputJsonp(callback string, data interface{}, coding ...bool) error {
-	return rp.response.Jsonp(callback, data, coding...)
-}
-
-func (rp *SpiderRoundtrip) GetMethod() string {
-	return rp.request.GetMethod()
-}
-
-//获取所有get变量
-func (rp *SpiderRoundtrip) GET() map[string]string {
-	return rp.request.GetAllGetParams()
-}
-
-//获取所有post提交变量
-func (rp *SpiderRoundtrip) POST() map[string]interface{} {
-	return rp.request.GetAllPostParams()
-}
-
-//获取request的body
-func (rp *SpiderRoundtrip) ReqBody() []byte {
-	return rp.request.ReadBody()
-}
-
-//跳转
-func (rp *SpiderRoundtrip) Redirect(url string) {
-	http.Redirect(rp.response.Writer, rp.request.request, url, 301)
-}
-
-//TODO
-//获取上传文件
-func (rp *SpiderRoundtrip) GetUploadFiles(key string) ([]*multipart.FileHeader, error) {
-	return rp.request.GetUploadFiles(key)
-}
-
-func (rp *SpiderRoundtrip) MoveUploadFile(fromfile, tofile string) error {
-	return rp.request.MoveUploadFile(fromfile, tofile)
-}
-
-func (rp *SpiderRoundtrip) GetFileSize(file *multipart.File) int64 {
-	return rp.request.GetFileSize(file)
+func (mux *HandlerMux) DELETE(location string , acFunc ActionFunc) {
+	defController := mux.DefController.(*DefaultController)
+	defController.routers = append(defController.routers, ControllerRouter {
+		Method:"DELETE", Location: location, Action:"DefaultDeleteAction",
+	})
+	defController.funcMapDelete[location] = acFunc
 }
