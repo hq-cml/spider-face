@@ -99,7 +99,7 @@ func (spd *Spider) Run() {
 		panic("Wrong type of mux!")
 	}
 	spd.RegisterController([]core.Controller{
-		mux.DefController,
+		mux.FoolController,
 	})
 
 	//信号处理函数

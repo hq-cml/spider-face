@@ -8,63 +8,60 @@ import (
 )
 
 type HelloController struct {
-	core.SpiderRoundtrip
+	spdrp core.SpiderRoundtrip
 }
 
-func (hello *HelloController) HelloAction() {
-	hello.SpiderRoundtrip.Echo("hello world!")
+func (hello *HelloController) HelloAction(rp core.Roundtrip) {
+	rp.Echo("hello world!")
 }
 
-//func (hello *HelloController) GetAllRouters() []core.ControllerRouter {
-//	return []core.ControllerRouter{
-//		{Method:"GET", Location: "/hello", Action:"HelloAction",},
-//	}
-//}
+func (hello *HelloController) GetAllRouters() []core.ControllerRouter { //TODO 这种方式不够友好
+	return []core.ControllerRouter{
+		{Method:"GET", Location:"/hello/:id", Action: "IndexAction",},
+		{Method:"GET", Location: "/hello", Action:"HelloAction",},
+		{Method:"GET", Location: "/index", Action:"IndexAction",},
+		{Method:"GET", Location: "/index/:id", Action:"IndexAction",},
+		{Method:"GET", Location: "/index/*", Action:"IndexAction",},
+		{Method:"POST", Location: "/index/post", Action:"PostAction",},
+		{Method:"GET", Location: "/json", Action:"JsonAction",},
+	}
+}
 
-func (hello *HelloController) JsonAction() {
-	if hello.Param("encode") == "yes" {
-		hello.OutputJson(map[string]string {
+func (hello *HelloController) GetRoundTrip() core.Roundtrip {
+	return &hello.spdrp
+}
+
+func (hello *HelloController) JsonAction(rp core.Roundtrip) {
+	if rp.Param("encode") == "yes" {
+		rp.OutputJson(map[string]string {
 			"a":"中文",
 			"b":"yingwen",
 		}, true)
 	} else {
-		hello.OutputJson(map[string]string {
+		rp.OutputJson(map[string]string {
 			"a":"中文",
 			"b":"yingwen",
 		})
 	}
 }
 
-func (hello *HelloController) IndexAction() {
-	hello.Assign("nowtime", time.Now())
-	hello.Assign("title", "welcome to spider~")
-	hello.Assign("id", hello.Param("id"))
-	hello.Assign("name", hello.Param("name"))
-	hello.Assign("age", hello.Param("age"))
-	hello.Display()
+func (hello *HelloController) IndexAction(rp core.Roundtrip) {
+	rp.Assign("nowtime", time.Now())
+	rp.Assign("title", "welcome to spider~")
+	rp.Assign("id", rp.Param("id"))
+	rp.Assign("name", rp.Param("name"))
+	rp.Assign("age", rp.Param("age"))
+	rp.Display()
 }
 
-func (hello *HelloController) PostAction() {
-	hello.Assign("nowtime", time.Now())
-	hello.Assign("title", "welcome to spider~")
-	hello.Assign("id", hello.Param("id"))
-	hello.Assign("name", hello.Param("name"))
-	hello.Assign("age", hello.Param("age"))
-	hello.Display("hello/index")
+func (hello *HelloController) PostAction(rp core.Roundtrip) {
+	rp.Assign("nowtime", time.Now())
+	rp.Assign("title", "welcome to spider~")
+	rp.Assign("id", rp.Param("id"))
+	rp.Assign("name", rp.Param("name"))
+	rp.Assign("age", rp.Param("age"))
+	rp.Display("hello/index")
 }
-
-func (hello *HelloController) GetAllRouters() []core.ControllerRouter {
-	return []core.ControllerRouter{
-		{Method:"GET", Location:"/hello/:id", Action: "IndexAction",},
-		{Method:"GET", Location: "/hello", Action:"HelloAction",},
-		{Method:"GET", Location: "/index", Action:"IndexAction",},
-		{Method:"GET", Location: "/index/:id", Action:"IndexAction",},
-		{Method:"GET", Location: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
-		{Method:"POST", Location: "/index/post", Action:"PostAction",},
-		{Method:"GET", Location: "/json", Action:"JsonAction",},
-	}
-}
-
 
 func main() {
 	//server config

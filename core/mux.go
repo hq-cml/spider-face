@@ -20,12 +20,12 @@ var (
 
 //多路复用器，用来替换掉golang默认的DefaultServerMux
 type HandlerMux struct {
-	logger        SpiderLogger
-	rewriter      *Rewriter
-    customErrHtml map[int]string
-	routerManger  *RouterManager
-	controllerMap map[string]reflect.Type
-	DefController Controller
+	logger         SpiderLogger
+	rewriter       *Rewriter
+    customErrHtml  map[int]string
+	routerManger   *RouterManager
+	controllerMap  map[string]reflect.Type
+	FoolController *FoolishController
 }
 
 //create Application object
@@ -44,10 +44,10 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger,
 
 	//生成mux
 	mux := &HandlerMux {
-		logger: logger,
-		customErrHtml:customErrHtml,
-		controllerMap: map[string]reflect.Type{},
-		DefController: NewDefaultController(),
+		logger:         logger,
+		customErrHtml:  customErrHtml,
+		controllerMap:  map[string]reflect.Type{},
+		FoolController: NewFoolishController(),
 	}
 
 	//生成rewriter
@@ -181,7 +181,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	request.pathParams = pathParam
 
-	if controllerName == "Default" {
+	if controllerName == FOOLISH_CONTROLLER_NAME {
 		mux.handleDefaultController(request, response, controllerName, actionName)
 	} else {
 		mux.handleNormalController(request, response, controllerName, actionName)
@@ -192,26 +192,28 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 func (mux *HandlerMux) handleDefaultController(request *Request, response *Response,
 	controllerName, actionName string) {
-	defController := DefaultController {
-		funcMapGet: mux.DefController.(*DefaultController).funcMapGet,
-		funcMapPost: mux.DefController.(*DefaultController).funcMapPost,
-		funcMapPut: mux.DefController.(*DefaultController).funcMapPut,
-		funcMapDelete: mux.DefController.(*DefaultController).funcMapDelete,
+
+	//实时
+	foolController := FoolishController{
+		funcMapGet: mux.FoolController.funcMapGet,
+		funcMapPost: mux.FoolController.funcMapPost,
+		funcMapPut: mux.FoolController.funcMapPut,
+		funcMapDelete: mux.FoolController.funcMapDelete,
 	}
 
-	defController.Init(request, response, mux.logger)
+	foolController.GetRoundTrip().Init(request, response, mux.logger)
 
 	switch request.GetMethod() {
 	case "GET":
-		defController.DefaultGetAction()
+		foolController.DefaultGetAction()
 	case "POST":
-		defController.DefaultPostAction()
+		foolController.DefaultPostAction()
 	case "PUT":
-		defController.DefaultPutAction()
+		foolController.DefaultPutAction()
 	case "DELETE":
-		defController.DefaultDeleteAction()
+		foolController.DefaultDeleteAction()
 	default:
-		defController.DefaultGetAction()
+		foolController.DefaultGetAction()
 	}
 
 
@@ -233,9 +235,10 @@ func (mux *HandlerMux) handleNormalController(request *Request, response *Respon
 	if !b {
 		panic("Oh my god")
 	}
-	c.Init(request, response, mux.logger)
-	c.SetName(controllerName)
-	c.SetAction(actionName)
+	rp := c.GetRoundTrip()
+	rp.Init(request, response, mux.logger)
+	rp.SetName(controllerName)
+	rp.SetAction(actionName)
 
 	//执行Action（包括前后的Hook，如果有）
 	actions := make([]reflect.Value, 0)
@@ -252,9 +255,44 @@ func (mux *HandlerMux) handleNormalController(request *Request, response *Respon
 		actions = append(actions, afterAction)
 	}
 
-	requestParams := make([]reflect.Value, 0)
+	//roundTrip就是Action函数的参数
+	requestParams := []reflect.Value{
+		reflect.ValueOf(rp),
+	}
 	//Run : before_dispatch -> controller_handler -> after_dispatch
 	for _, action := range actions {
 		action.Call(requestParams)
 	}
+}
+
+func (mux *HandlerMux) GET(location string , acFunc ActionFunc) {
+	foolController := mux.FoolController
+	foolController.routers = append(foolController.routers, ControllerRouter {
+		Method:"GET", Location: location, Action:"DefaultGetAction",
+	})
+	foolController.funcMapGet[location] = acFunc
+}
+
+func (mux *HandlerMux) POST(location string , acFunc ActionFunc) {
+	foolController := mux.FoolController
+	foolController.routers = append(foolController.routers, ControllerRouter {
+		Method:"POST", Location: location, Action:"DefaultPostAction",
+	})
+	foolController.funcMapPost[location] = acFunc
+}
+
+func (mux *HandlerMux) PUT(location string , acFunc ActionFunc) {
+	foolController := mux.FoolController
+	foolController.routers = append(foolController.routers, ControllerRouter {
+		Method:"PUT", Location: location, Action:"DefaultPutAction",
+	})
+	foolController.funcMapPut[location] = acFunc
+}
+
+func (mux *HandlerMux) DELETE(location string , acFunc ActionFunc) {
+	foolController := mux.FoolController
+	foolController.routers = append(foolController.routers, ControllerRouter {
+		Method:"DELETE", Location: location, Action:"DefaultDeleteAction",
+	})
+	foolController.funcMapDelete[location] = acFunc
 }

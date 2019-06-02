@@ -2,18 +2,15 @@ package core
 
 import "fmt"
 
-type ActionFunc func(rp Roundtrip)
-
 /*
  * Controller接口，规定了Spider中必需的合法的行为
  */
 type Controller interface {
-	//用户实现
 	GetAllRouters() []ControllerRouter
-
-	//Spider提供, 获取Controller的实时状态用于任务分发场景
-	Roundtrip
+	GetRoundTrip() Roundtrip
 }
+
+type ActionFunc func(rp Roundtrip)
 
 type ControllerRouter struct {
 	Method   string
@@ -21,9 +18,9 @@ type ControllerRouter struct {
 	Action   string
 }
 
-//一个系统默认的controller，用于快捷注册
-type DefaultController struct {
-	SpiderRoundtrip
+//系统自动注册一个默认的Controller，用于傻瓜式快捷注册
+type FoolishController struct {
+	spdrt           SpiderRoundtrip
 	routers    		[]ControllerRouter
 
 	funcMapGet  	map[string]ActionFunc
@@ -32,8 +29,18 @@ type DefaultController struct {
 	funcMapDelete   map[string]ActionFunc
 }
 
-func NewDefaultController() *DefaultController {
-	return &DefaultController{
+const FOOLISH_CONTROLLER_NAME = "Foolish"
+
+func (fc *FoolishController) GetAllRouters() []ControllerRouter {
+	return fc.routers
+}
+
+func (fc *FoolishController) GetRoundTrip() Roundtrip {
+	return &fc.spdrt
+}
+
+func NewFoolishController() *FoolishController {
+	return &FoolishController{
 		routers:    	 []ControllerRouter{},
 		funcMapGet:		 map[string]ActionFunc{},
 		funcMapPost:	 map[string]ActionFunc{},
@@ -42,74 +49,43 @@ func NewDefaultController() *DefaultController {
 	}
 }
 
-func (def *DefaultController) DefaultGetAction() {
-	tmpFunc, ok := def.funcMapGet[def.UrlPath()]
+func (fc *FoolishController) DefaultGetAction() {
+	rp := fc.GetRoundTrip()
+	actionFunc, ok := fc.funcMapGet[rp.UrlPath()]
+
 	if ok {
-		tmpFunc(def)
+		actionFunc(rp)
 	} else {
 		fmt.Println("404")
 	}
 }
 
-func (def *DefaultController) DefaultPostAction() {
-	tmpFunc, ok := def.funcMapPost[def.UrlPath()]
+func (fc *FoolishController) DefaultPostAction() {
+	rp := fc.GetRoundTrip()
+	actionFunc, ok := fc.funcMapPost[rp.UrlPath()]
 	if ok {
-		tmpFunc(def)
+		actionFunc(rp)
 	} else {
 		fmt.Println("404")
 	}
 }
 
-func (def *DefaultController) DefaultPutAction() {
-	tmpFunc, ok := def.funcMapPut[def.UrlPath()]
+func (fc *FoolishController) DefaultPutAction() {
+	rp := fc.GetRoundTrip()
+	actionFunc, ok := fc.funcMapPut[rp.UrlPath()]
 	if ok {
-		tmpFunc(def)
+		actionFunc(rp)
 	} else {
 		fmt.Println("404")
 	}
 }
 
-func (def *DefaultController) DefaultDeleteAction() {
-	tmpFunc, ok := def.funcMapDelete[def.UrlPath()]
+func (fc *FoolishController) DefaultDeleteAction() {
+	rp := fc.GetRoundTrip()
+	actionFunc, ok := fc.funcMapDelete[rp.UrlPath()]
 	if ok {
-		tmpFunc(def)
+		actionFunc(rp)
 	} else {
 		fmt.Println("404")
 	}
-}
-
-func (def *DefaultController) GetAllRouters() []ControllerRouter {
-	return def.routers
-}
-
-func (mux *HandlerMux) GET(location string , acFunc ActionFunc) {
-	defController := mux.DefController.(*DefaultController)
-	defController.routers = append(defController.routers, ControllerRouter {
-		Method:"GET", Location: location, Action:"DefaultGetAction",
-	})
-	defController.funcMapGet[location] = acFunc
-}
-
-func (mux *HandlerMux) POST(location string , acFunc ActionFunc) {
-	defController := mux.DefController.(*DefaultController)
-	defController.routers = append(defController.routers, ControllerRouter {
-		Method:"POST", Location: location, Action:"DefaultPostAction",
-	})
-	defController.funcMapPost[location] = acFunc
-}
-
-func (mux *HandlerMux) PUT(location string , acFunc ActionFunc) {
-	defController := mux.DefController.(*DefaultController)
-	defController.routers = append(defController.routers, ControllerRouter {
-		Method:"PUT", Location: location, Action:"DefaultPutAction",
-	})
-	defController.funcMapPut[location] = acFunc
-}
-
-func (mux *HandlerMux) DELETE(location string , acFunc ActionFunc) {
-	defController := mux.DefController.(*DefaultController)
-	defController.routers = append(defController.routers, ControllerRouter {
-		Method:"DELETE", Location: location, Action:"DefaultDeleteAction",
-	})
-	defController.funcMapDelete[location] = acFunc
 }
