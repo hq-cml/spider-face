@@ -11,9 +11,13 @@ import (
  */
 type Controller interface {
 	//用户实现
-	GetRouter() []ControllerRouter
+	GetAllRouters() []ControllerRouter
 
 	//Spider提供, 获取Controller的实时状态用于任务分发场景
+	Roundtrip
+}
+
+type Roundtrip interface {
 	Init(request *Request, response *Response, logger SpiderLogger) bool
 	SetName(name string)
 	GetName() string
@@ -23,13 +27,12 @@ type Controller interface {
 	Param(key string, defaultValue ...string) string
 	Display(viewPath ...string)
 	Assign(key interface{}, value interface{})
-
 }
 
 //实时controller，每次请求到来，都会动态生成一个controller实例
 //通过这个实例来控制逻辑处理、输入、输出
 //这个结构将会嵌入到所有的用户定制Controller对象中去
-type RuntimeController struct {
+type SpiderRoundtrip struct {
 	request  *Request
 	response *Response
 	view     *View
@@ -44,38 +47,38 @@ type ControllerRouter struct {
 	Action   string
 }
 
-func (rc *RuntimeController) Init(request *Request, response *Response, logger SpiderLogger) bool {
-	rc.request = request
-	rc.response = response
-	rc.view = NewView(logger)
+func (rp *SpiderRoundtrip) Init(request *Request, response *Response, logger SpiderLogger) bool {
+	rp.request = request
+	rp.response = response
+	rp.view = NewView(logger)
 
 	return true
 }
 
-func (rc *RuntimeController) SetName(name string) {
+func (rp *SpiderRoundtrip) SetName(name string) {
 	if name == "" {
 		return
 	}
-	rc.controllerName = name
+	rp.controllerName = name
 }
 
-func (rc *RuntimeController) GetName() string {
-	return rc.controllerName
+func (rp *SpiderRoundtrip) GetName() string {
+	return rp.controllerName
 }
 
-func (rc *RuntimeController) SetAction(name string) {
+func (rp *SpiderRoundtrip) SetAction(name string) {
 	if name == "" {
 		return
 	}
-	rc.actionName = name
+	rp.actionName = name
 }
 
-func (rc *RuntimeController) GetAction() string {
-	return rc.actionName
+func (rp *SpiderRoundtrip) GetAction() string {
+	return rp.actionName
 }
 
-func (rc *RuntimeController) Param(key string, defaultValue ...string) string {
-	v := rc.request.FindParam(key)
+func (rp *SpiderRoundtrip) Param(key string, defaultValue ...string) string {
+	v := rp.request.FindParam(key)
 	if v == "" && defaultValue != nil {
 		return defaultValue[0]
 	}
@@ -83,118 +86,118 @@ func (rc *RuntimeController) Param(key string, defaultValue ...string) string {
 }
 
 //向页面模板引擎注册数据,待展示用
-func (rc *RuntimeController) Assign(key interface{}, value interface{}) {
-	rc.view.Assign(key, value)
+func (rp *SpiderRoundtrip) Assign(key interface{}, value interface{}) {
+	rp.view.Assign(key, value)
 }
 
 //输出展示页面
-func (rc *RuntimeController) Display(viewPath ...string) {
-	bytes, err := rc.Render(viewPath...)
+func (rp *SpiderRoundtrip) Display(viewPath ...string) {
+	bytes, err := rp.Render(viewPath...)
 
 	if err == nil {
-		rc.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-		rc.response.WriteBody(bytes)
+		rp.response.SetHeader("Content-Type", "text/html; charset=utf-8")
+		rp.response.WriteBody(bytes)
 	} else {
-		rc.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-		rc.response.WriteBody([]byte(err.Error()))
+		rp.response.SetHeader("Content-Type", "text/html; charset=utf-8")
+		rp.response.WriteBody([]byte(err.Error()))
 	}
 }
 
-func (rc *RuntimeController) Render(viewPath ...string) ([]byte, error) {
+func (rp *SpiderRoundtrip) Render(viewPath ...string) ([]byte, error) {
 	var viewPathName string
 	if viewPath == nil || viewPath[0] == "" {
-		viewPathName = rc.GetName() + "/" + rc.GetAction()
+		viewPathName = rp.GetName() + "/" + rp.GetAction()
 		fmt.Println("viewName:", viewPathName)
 	} else {
 		viewPathName = viewPath[0]
 		fmt.Println("viewName_x:", viewPathName)
 	}
-	return rc.view.Render(viewPathName)
+	return rp.view.Render(viewPathName)
 }
 
-func (rc *RuntimeController) GetCookie(name string) string {
-	return rc.request.GetCookie(name)
+func (rp *SpiderRoundtrip) GetCookie(name string) string {
+	return rp.request.GetCookie(name)
 }
 
-func (rc *RuntimeController) GetUri() string {
-	return rc.request.GetUri()
+func (rp *SpiderRoundtrip) GetUri() string {
+	return rp.request.GetUri()
 }
 
-func (rc *RuntimeController) UrlPath() string {
-	return rc.request.UrlPath()
+func (rp *SpiderRoundtrip) UrlPath() string {
+	return rp.request.UrlPath()
 }
 
-func (rc *RuntimeController) GetClientIP() string {
-	return rc.request.GetClientIP()
+func (rp *SpiderRoundtrip) GetClientIP() string {
+	return rp.request.GetClientIP()
 }
 
-func (rc *RuntimeController) Scheme() string {
-	return rc.request.Scheme()
+func (rp *SpiderRoundtrip) Scheme() string {
+	return rp.request.Scheme()
 }
 
-func (rc *RuntimeController) Header(key string) string {
-	return rc.request.GetHeader(key)
+func (rp *SpiderRoundtrip) Header(key string) string {
+	return rp.request.GetHeader(key)
 }
 
-func (rc *RuntimeController) SetHeader(key, value string) {
-	rc.response.SetHeader(key, value)
+func (rp *SpiderRoundtrip) SetHeader(key, value string) {
+	rp.response.SetHeader(key, value)
 }
 
-func (rc *RuntimeController) SetCookie(name string, value string, others ...interface{}) {
-	rc.response.SetCookie(name, value, others...)
+func (rp *SpiderRoundtrip) SetCookie(name string, value string, others ...interface{}) {
+	rp.response.SetCookie(name, value, others...)
 }
 
-func (rc *RuntimeController) Echo(content string) {
-	rc.OutputBytes([]byte(content))
+func (rp *SpiderRoundtrip) Echo(content string) {
+	rp.OutputBytes([]byte(content))
 }
 
-func (rc *RuntimeController) OutputBytes(bytes []byte) {
-	rc.response.SetHeader("Content-Type", "text/html; charset=utf-8")
-	rc.response.WriteBody(bytes)
+func (rp *SpiderRoundtrip) OutputBytes(bytes []byte) {
+	rp.response.SetHeader("Content-Type", "text/html; charset=utf-8")
+	rp.response.WriteBody(bytes)
 }
 
-func (rc *RuntimeController) OutputJson(data interface{}, coding ...bool) error {
-	return rc.response.Json(data, coding...)
+func (rp *SpiderRoundtrip) OutputJson(data interface{}, coding ...bool) error {
+	return rp.response.Json(data, coding...)
 }
 
-func (rc *RuntimeController) OutputJsonp(callback string, data interface{}, coding ...bool) error {
-	return rc.response.Jsonp(callback, data, coding...)
+func (rp *SpiderRoundtrip) OutputJsonp(callback string, data interface{}, coding ...bool) error {
+	return rp.response.Jsonp(callback, data, coding...)
 }
 
-func (rc *RuntimeController) GetMethod() string {
-	return rc.request.GetMethod()
+func (rp *SpiderRoundtrip) GetMethod() string {
+	return rp.request.GetMethod()
 }
 
 //获取所有get变量
-func (rc *RuntimeController) GET() map[string]string {
-	return rc.request.GetAllGetParams()
+func (rp *SpiderRoundtrip) GET() map[string]string {
+	return rp.request.GetAllGetParams()
 }
 
 //获取所有post提交变量
-func (rc *RuntimeController) POST() map[string]interface{} {
-	return rc.request.GetAllPostParams()
+func (rp *SpiderRoundtrip) POST() map[string]interface{} {
+	return rp.request.GetAllPostParams()
 }
 
 //获取request的body
-func (rc *RuntimeController) ReqBody() []byte {
-	return rc.request.ReadBody()
+func (rp *SpiderRoundtrip) ReqBody() []byte {
+	return rp.request.ReadBody()
 }
 
 //跳转
-func (rc *RuntimeController) Redirect(url string) {
-	http.Redirect(rc.response.Writer, rc.request.request, url, 301)
+func (rp *SpiderRoundtrip) Redirect(url string) {
+	http.Redirect(rp.response.Writer, rp.request.request, url, 301)
 }
 
 //TODO
 //获取上传文件
-func (rc *RuntimeController) GetUploadFiles(key string) ([]*multipart.FileHeader, error) {
-	return rc.request.GetUploadFiles(key)
+func (rp *SpiderRoundtrip) GetUploadFiles(key string) ([]*multipart.FileHeader, error) {
+	return rp.request.GetUploadFiles(key)
 }
 
-func (rc *RuntimeController) MoveUploadFile(fromfile, tofile string) error {
-	return rc.request.MoveUploadFile(fromfile, tofile)
+func (rp *SpiderRoundtrip) MoveUploadFile(fromfile, tofile string) error {
+	return rp.request.MoveUploadFile(fromfile, tofile)
 }
 
-func (rc *RuntimeController) GetFileSize(file *multipart.File) int64 {
-	return rc.request.GetFileSize(file)
+func (rp *SpiderRoundtrip) GetFileSize(file *multipart.File) int64 {
+	return rp.request.GetFileSize(file)
 }

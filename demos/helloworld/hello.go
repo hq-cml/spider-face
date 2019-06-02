@@ -4,70 +4,66 @@ import (
 	"github.com/hq-cml/spider-face/core"
 	"github.com/hq-cml/spider-face"
 	"fmt"
-	"time"
 )
 
 type HelloController struct {
-	core.RuntimeController
+	core.SpiderRoundtrip
 }
 
-func (hello *HelloController) HelloAction() {
-	hello.Echo("hello world!")
+//func (hello *HelloController) HelloAction() {
+//	hello.Echo("hello world!")
+//}
+//
+func (hello *HelloController) GetAllRouters() []core.ControllerRouter {
+	return []core.ControllerRouter{
+		{Method:"GET", Location: "/hello", Action:"HelloAction",},
+	}
 }
-
-//func (hello *HelloController) GetRouter() []core.ControllerRouter {
+//
+//func (hello *HelloController) JsonAction() {
+//	if hello.Param("encode") == "yes" {
+//		hello.OutputJson(map[string]string {
+//			"a":"中文",
+//			"b":"yingwen",
+//		}, true)
+//	} else {
+//		hello.OutputJson(map[string]string {
+//			"a":"中文",
+//			"b":"yingwen",
+//		})
+//	}
+//}
+//
+//func (hello *HelloController) IndexAction() {
+//	hello.Assign("nowtime", time.Now())
+//	hello.Assign("title", "welcome to spider~")
+//	hello.Assign("id", hello.Param("id"))
+//	hello.Assign("name", hello.Param("name"))
+//	hello.Assign("age", hello.Param("age"))
+//	hello.Display()
+//}
+//
+//func (hello *HelloController) PostAction() {
+//	hello.Assign("nowtime", time.Now())
+//	hello.Assign("title", "welcome to spider~")
+//	hello.Assign("id", hello.Param("id"))
+//	hello.Assign("name", hello.Param("name"))
+//	hello.Assign("age", hello.Param("age"))
+//	hello.Display("hello/index")
+//}
+//
+//func (hello *HelloController) GetAllRouters() []core.ControllerRouter {
 //	return []core.ControllerRouter{
+//		{Method:"GET", Location:"/hello/:id", Action: "IndexAction",},
 //		{Method:"GET", Location: "/hello", Action:"HelloAction",},
+//		{Method:"GET", Location: "/index", Action:"IndexAction",},
+//		{Method:"GET", Location: "/index/:id", Action:"IndexAction",},
+//		{Method:"GET", Location: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
+//		{Method:"POST", Location: "/index/post", Action:"PostAction",},
+//		{Method:"GET", Location: "/json", Action:"JsonAction",},
 //	}
 //}
 
-func (hello *HelloController) JsonAction() {
-	if hello.Param("encode") == "yes" {
-		hello.OutputJson(map[string]string {
-			"a":"中文",
-			"b":"yingwen",
-		}, true)
-	} else {
-		hello.OutputJson(map[string]string {
-			"a":"中文",
-			"b":"yingwen",
-		})
-	}
-}
-
-func (hello *HelloController) IndexAction() {
-	hello.Assign("nowtime", time.Now())
-	hello.Assign("title", "welcome to spider~")
-	hello.Assign("id", hello.Param("id"))
-	hello.Assign("name", hello.Param("name"))
-	hello.Assign("age", hello.Param("age"))
-	hello.Display()
-}
-
-func (hello *HelloController) PostAction() {
-	hello.Assign("nowtime", time.Now())
-	hello.Assign("title", "welcome to spider~")
-	hello.Assign("id", hello.Param("id"))
-	hello.Assign("name", hello.Param("name"))
-	hello.Assign("age", hello.Param("age"))
-	hello.Display("hello/index")
-}
-
-func (hello *HelloController) GetRouter() []core.ControllerRouter {
-	return []core.ControllerRouter{
-		{Method:"GET", Location:"/hello/:id", Action: "IndexAction",},
-		{Method:"GET", Location: "/hello", Action:"HelloAction",},
-		{Method:"GET", Location: "/index", Action:"IndexAction",},
-		{Method:"GET", Location: "/index/:id", Action:"IndexAction",},
-		{Method:"GET", Location: "/index/*", Action:"IndexAction",},    //TODO 这种方式不够科学
-		{Method:"POST", Location: "/index/post", Action:"PostAction",},
-		{Method:"GET", Location: "/json", Action:"JsonAction",},
-	}
-}
-
-var controllers = []core.Controller{
-	&HelloController{},
-}
 
 func main() {
 	//server config
@@ -83,11 +79,13 @@ func main() {
 	}
 
 	//注册controller
-	err = spd.RegisterController(controllers)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	//err = spd.RegisterController([]core.Controller{
+	//	&HelloController{},
+	//})
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
 
 	//spd.GET("/hello", func(c core.Controller) {
 	//	fmt.Println("M--------------", c.Param("id"))

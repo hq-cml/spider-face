@@ -10,7 +10,7 @@ import (
 
 //TODO 使用不够友好简单
 type HelloController struct {
-	core.RuntimeController
+	core.SpiderRoundtrip
 }
 
 func (hello *HelloController) HelloAction() {
@@ -50,7 +50,7 @@ func (hello *HelloController) PostAction() {
 	hello.Display("hello/index")
 }
 
-func (hello *HelloController) GetRouter() []core.ControllerRouter {
+func (hello *HelloController) GetAllRouters() []core.ControllerRouter {
 	return []core.ControllerRouter{
 		{Method:"GET", Location:"/hello/:id", Action: "IndexAction",},
 		{Method:"GET", Location: "/hello", Action:"HelloAction",},

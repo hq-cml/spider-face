@@ -6,7 +6,7 @@ type ActionFunc func(c Controller)
 
 //一个系统默认的controller，用于快捷注册
 type DefaultController struct {
-	RuntimeController
+	SpiderRoundtrip
 	routers    		[]ControllerRouter
 
 	funcMapGet  	map[string]ActionFunc
@@ -61,7 +61,7 @@ func (def *DefaultController) DefaultDeleteAction() {
 	}
 }
 
-func (def *DefaultController) GetRouter() []ControllerRouter {
+func (def *DefaultController) GetAllRouters() []ControllerRouter {
 	return def.routers
 }
 
