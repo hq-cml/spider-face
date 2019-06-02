@@ -1,0 +1,13 @@
+{{define "index"}}
+<html>
+<title>{{.title}}</title>
+<link href="/css/main.css" rel="stylesheet" type="text/css">
+<script language=javascript src="/js/jquery.min.js" type=text/javascript></script>
+<body>
+{{template "public/header" .}}
+{{template "content" .}}
+{{template "public/footer"}}
+</body>
+</html>
+{{end}}
+

@@ -17,7 +17,7 @@ var (
 	ViewExt       string = ".html"
 	ViewTemplates map[string]*template.Template
 	templateFiles map[string]string
-	viewFunc      template.FuncMap //map[string]interface{}
+	viewFunc      template.FuncMap             //map[string]interface{}
 )
 
 type View struct {
@@ -83,6 +83,7 @@ func AddViewFunc(key string, func_name interface{}) {
 	viewFunc[key] = func_name
 }
 
+//初始化解析所有的模板文件
 func InitViewTemplate(viewRoot string, logger SpiderLogger) error {
 	if viewRoot == "" {
 		logger.Info("ViewPathRoot is nil~")

@@ -21,11 +21,11 @@ var (
 //多路复用器，用来替换掉golang默认的DefaultServerMux
 type HandlerMux struct {
 	logger         SpiderLogger
-	rewriter       *Rewriter
+	rewriter       *Rewriter               //地址重写器，地址重写工作在路由之前完成
     customErrHtml  map[int]string
-	routerManger   *RouterManager
-	controllerMap  map[string]reflect.Type
-	FoolController *FoolishController
+	routerManger   *RouterManager          //路由管理器，负责实际的请求路由到对应的Controller/Action
+	controllerMap  map[string]reflect.Type //所有controller的动态类型，用于controller实例还原
+	FoolController *FoolishController      //Spider自带的默认Controller，用于快捷注册使用
 }
 
 //create Application object
@@ -71,13 +71,11 @@ func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 	for _, controller := range controllers {
 		//获取controller的名字
 		typ := reflect.Indirect(reflect.ValueOf(controller)).Type()
-		if strings.Index(typ.Name(), "Controller") == -1 {
+		if strings.Index(typ.Name(), CONTROLLER_SUFFIX) == -1 {
 			return errors.New("Invalid Controller Name! Must End with 'Controller'")
 		}
-		//name := strings.ToLower(strings.TrimSuffix(typ.Name(), "Controller"))
-		name := strings.TrimSuffix(typ.Name(), "Controller")
-
-		fmt.Println("A-----------", name)
+		//name := strings.ToLower(strings.TrimSuffix(typ.Name(), CONTROLLER_SUFFIX))
+		name := strings.TrimSuffix(typ.Name(), CONTROLLER_SUFFIX)
 
 		//名字验重
 		if _, exist := mux.controllerMap[name]; exist {
@@ -99,26 +97,6 @@ func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 	}
 
 	return nil
-}
-
-//通过反射包和controller的名字，还原Controller的reflect.Value
-func (mux *HandlerMux) ValueOfController(controllerName string) (reflect.Value, error) {
-	var valueOfController reflect.Value
-
-	fmt.Println("B------------", controllerName)
-	typeOfController, exist := mux.controllerMap[controllerName];
-	if !exist {
-		//http 404
-		return valueOfController, errors.New("Warn : Can't find " + controllerName)
-	}
-
-	valueOfController = reflect.New(typeOfController)
-	if !valueOfController.IsValid() {
-		//http 404
-		return valueOfController, errors.New("Warn : Can't find " + controllerName)
-	}
-
-	return valueOfController, nil
 }
 
 //实现http.Handler接口
@@ -163,8 +141,12 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	var ok error
 
 	//去除urlPaht，交给路由管理利器来分析，得到controller和action
-	urlPath := strings.TrimRight(request.UrlPath(), "/")
-	fmt.Println("REQ URL PATH: ", r.Method, urlPath)
+	urlPath := ""
+	if request.UrlPath() != "/" {
+		urlPath = strings.TrimRight(request.UrlPath(), "/")
+	} else {
+		urlPath = request.UrlPath()
+	}
 	if urlPath != "" { //有url
 		controllerName, actionName, pathParam, ok = routerManager.AnalysePath(r.Method, urlPath)
 		if ok != nil {
@@ -182,7 +164,7 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	request.pathParams = pathParam
 
 	if controllerName == FOOLISH_CONTROLLER_NAME {
-		mux.handleDefaultController(request, response, controllerName, actionName)
+		mux.handleFoolController(request, response, controllerName, actionName)
 	} else {
 		mux.handleNormalController(request, response, controllerName, actionName)
 	}
@@ -190,10 +172,10 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	response.SetHeader("Connection", request.GetHeader("Connection"))
 }
 
-func (mux *HandlerMux) handleDefaultController(request *Request, response *Response,
+func (mux *HandlerMux) handleFoolController(request *Request, response *Response,
 	controllerName, actionName string) {
 
-	//实时
+	//创建一个Controller实时实例
 	foolController := FoolishController{
 		funcMapGet: mux.FoolController.funcMapGet,
 		funcMapPost: mux.FoolController.funcMapPost,
@@ -201,7 +183,7 @@ func (mux *HandlerMux) handleDefaultController(request *Request, response *Respo
 		funcMapDelete: mux.FoolController.funcMapDelete,
 	}
 
-	foolController.GetRoundTrip().Init(request, response, mux.logger)
+	foolController.GetRoundTrip().InitRoundtrip(request, response, controllerName, actionName, mux.logger)
 
 	switch request.GetMethod() {
 	case "GET":
@@ -216,7 +198,6 @@ func (mux *HandlerMux) handleDefaultController(request *Request, response *Respo
 		foolController.DefaultGetAction()
 	}
 
-
 	//TODO beforeAction
 	//TODO afterAction
 }
@@ -225,7 +206,7 @@ func (mux *HandlerMux) handleNormalController(request *Request, response *Respon
 		controllerName, actionName string) {
 	valueOfController, err := mux.ValueOfController(controllerName)
 	if err != nil {
-		OutErrorHtml(response, request, http.StatusNotFound, mux.customErrHtml)
+		OutputErrorHtml(response, request, http.StatusNotFound, mux.customErrHtml)
 		fmt.Println(err)
 		return
 	}
@@ -236,15 +217,13 @@ func (mux *HandlerMux) handleNormalController(request *Request, response *Respon
 		panic("Oh my god")
 	}
 	rp := c.GetRoundTrip()
-	rp.Init(request, response, mux.logger)
-	rp.SetName(controllerName)
-	rp.SetAction(actionName)
+	rp.InitRoundtrip(request, response, controllerName, actionName, mux.logger)
 
 	//执行Action（包括前后的Hook，如果有）
 	actions := make([]reflect.Value, 0)
 	controllerAction := valueOfController.MethodByName(actionName + ACTION_SUFFIX)
 	if controllerAction.IsValid() == false {
-		OutErrorHtml(response, request, http.StatusNotFound, mux.customErrHtml)
+		OutputErrorHtml(response, request, http.StatusNotFound, mux.customErrHtml)
 		return
 	}
 	if beforeAction := valueOfController.MethodByName(beforeDispatch); beforeAction.IsValid() == true {
@@ -263,6 +242,25 @@ func (mux *HandlerMux) handleNormalController(request *Request, response *Respon
 	for _, action := range actions {
 		action.Call(requestParams)
 	}
+}
+
+//通过反射包和controller的名字，还原Controller的reflect.Value
+func (mux *HandlerMux) ValueOfController(controllerName string) (reflect.Value, error) {
+	var valueOfController reflect.Value
+
+	typeOfController, exist := mux.controllerMap[controllerName];
+	if !exist {
+		//http 404
+		return valueOfController, errors.New("Warn : Can't find " + controllerName)
+	}
+
+	valueOfController = reflect.New(typeOfController)
+	if !valueOfController.IsValid() {
+		//http 404
+		return valueOfController, errors.New("Warn : Can't find " + controllerName)
+	}
+
+	return valueOfController, nil
 }
 
 func (mux *HandlerMux) GET(location string , acFunc ActionFunc) {

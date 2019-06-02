@@ -1,7 +1,5 @@
 package core
 
-import "fmt"
-
 /*
  * Controller接口，规定了Spider中必需的合法的行为
  */
@@ -51,41 +49,24 @@ func NewFoolishController() *FoolishController {
 
 func (fc *FoolishController) DefaultGetAction() {
 	rp := fc.GetRoundTrip()
-	actionFunc, ok := fc.funcMapGet[rp.UrlPath()]
-
-	if ok {
-		actionFunc(rp)
-	} else {
-		fmt.Println("404")
-	}
+	actionFunc := fc.funcMapGet[rp.UrlPath()] //此处必然能存在，因为前面经过路径路由分析
+	actionFunc(rp)
 }
 
 func (fc *FoolishController) DefaultPostAction() {
 	rp := fc.GetRoundTrip()
-	actionFunc, ok := fc.funcMapPost[rp.UrlPath()]
-	if ok {
-		actionFunc(rp)
-	} else {
-		fmt.Println("404")
-	}
+	actionFunc := fc.funcMapPost[rp.UrlPath()]
+	actionFunc(rp)
 }
 
 func (fc *FoolishController) DefaultPutAction() {
 	rp := fc.GetRoundTrip()
-	actionFunc, ok := fc.funcMapPut[rp.UrlPath()]
-	if ok {
-		actionFunc(rp)
-	} else {
-		fmt.Println("404")
-	}
+	actionFunc := fc.funcMapPut[rp.UrlPath()]
+	actionFunc(rp)
 }
 
 func (fc *FoolishController) DefaultDeleteAction() {
 	rp := fc.GetRoundTrip()
-	actionFunc, ok := fc.funcMapDelete[rp.UrlPath()]
-	if ok {
-		actionFunc(rp)
-	} else {
-		fmt.Println("404")
-	}
+	actionFunc := fc.funcMapDelete[rp.UrlPath()]
+	actionFunc(rp)
 }

@@ -45,9 +45,9 @@ type DefaultLogger struct {
 
 var GlobalConf *SpiderConfig
 
-var (
+const (
 	DEFAULT_CONTROLLER     string       = "index"
 	DEFAULT_ACTION         string       = "index"
+	CONTROLLER_SUFFIX      string       = "Controller"
 	ACTION_SUFFIX          string       = "Action"
-	HTTP_METHOD_PARAM_NAME string       = "m"
 )

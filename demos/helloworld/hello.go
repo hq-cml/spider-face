@@ -98,7 +98,7 @@ func main() {
 		rp.Assign("name", rp.Param("name"))
 		rp.Assign("age", rp.Param("age"))
 
-		rp.Display("hello/index")
+		rp.Display()
 	})
 
 	spd.POST("/fast/post", func(rp core.Roundtrip) {

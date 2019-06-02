@@ -11,7 +11,7 @@ import (
 
 type Spider struct {
 	HttpServer    *http.Server
-	MuxHander     http.Handler    //自定义的多路复用器, 替换原生DefaultServerMux, 本质上是一个Handler接口的实现
+	MuxHander     *core.HandlerMux    //自定义的多路复用器, 替换原生DefaultServerMux, 本质上是一个Handler接口的实现
 	Config        *core.SpiderConfig
 	logger        core.SpiderLogger
 }
@@ -41,6 +41,9 @@ func NewSpider(sConfig *core.SpiderConfig,
 		}
 	}
 
+	logger.Debugf("TplPath: %v", sConfig.TplPath)
+	logger.Debugf("StaticPath: %v", sConfig.StaticPath)
+
 	//TODO
 	customErrHtml := map[int]string{}
 	rewriteRule := map[string]string {
@@ -54,7 +57,7 @@ func NewSpider(sConfig *core.SpiderConfig,
 		return nil, err
 	}
 
-	//替换掉golang自带的handler
+	//创建http.server实例，替换掉golang自带的handler
 	server := &http.Server {
 		Addr: sConfig.BindAddr,
 		Handler: mux,
@@ -68,7 +71,7 @@ func NewSpider(sConfig *core.SpiderConfig,
 		logger : logger,
 	}
 
-	//初始化解析视图模板
+	//初始化解析视图模板文件
 	err = core.InitViewTemplate(spd.Config.TplPath, spd.logger)
 	if err != nil {
 		return nil, err
@@ -80,11 +83,7 @@ func NewSpider(sConfig *core.SpiderConfig,
 
 func (spd *Spider) RegisterController(controllers []core.Controller) error {
 	//注册控制器
-	mux, ok := spd.MuxHander.(*core.HandlerMux)
-	if !ok {
-		return errors.New("Wrong type of mux!")
-	}
-	err := mux.RegisterController(controllers)
+	err := spd.MuxHander.RegisterController(controllers)
 	if err != nil {
 		return err
 	}
@@ -94,12 +93,8 @@ func (spd *Spider) RegisterController(controllers []core.Controller) error {
 
 func (spd *Spider) Run() {
 	//将Default注册到Mux中去
-	mux, ok := spd.MuxHander.(*core.HandlerMux)
-	if !ok {
-		panic("Wrong type of mux!")
-	}
-	spd.RegisterController([]core.Controller{
-		mux.FoolController,
+	spd.MuxHander.RegisterController([]core.Controller{
+		spd.MuxHander.FoolController,
 	})
 
 	//信号处理函数
@@ -121,39 +116,19 @@ func (spd *Spider) Run() {
 }
 
 func (spd *Spider) GET(location string , acFunc core.ActionFunc) {
-	//注册控制器
-	mux, ok := spd.MuxHander.(*core.HandlerMux)
-	if !ok {
-		panic("Wrong type of mux!")
-	}
-	mux.GET(location, acFunc)
+	spd.MuxHander.GET(location, acFunc)
 }
 
 func (spd *Spider) POST(location string , acFunc core.ActionFunc) {
-	//注册控制器
-	mux, ok := spd.MuxHander.(*core.HandlerMux)
-	if !ok {
-		panic("Wrong type of mux!")
-	}
-	mux.POST(location, acFunc)
+	spd.MuxHander.POST(location, acFunc)
 }
 
 func (spd *Spider) PUT(location string , acFunc core.ActionFunc) {
-	//注册控制器
-	mux, ok := spd.MuxHander.(*core.HandlerMux)
-	if !ok {
-		panic("Wrong type of mux!")
-	}
-	mux.PUT(location, acFunc)
+	spd.MuxHander.PUT(location, acFunc)
 }
 
 func (spd *Spider) DELETE(location string , acFunc core.ActionFunc) {
-	//注册控制器
-	mux, ok := spd.MuxHander.(*core.HandlerMux)
-	if !ok {
-		panic("Wrong type of mux!")
-	}
-	mux.DELETE(location, acFunc)
+	spd.MuxHander.DELETE(location, acFunc)
 }
 
 //TODO

@@ -45,10 +45,10 @@ func OutputStaticFile(response *Response, request *Request, file string, customE
 	filePath := GlobalConf.StaticPath + file
 	fi, err := os.Stat(filePath)
 	if err != nil && os.IsNotExist(err) {
-		OutErrorHtml(response, request, http.StatusNotFound, customErrHtml)
+		OutputErrorHtml(response, request, http.StatusNotFound, customErrHtml)
 		return
 	} else if fi.IsDir() == true {
-		OutErrorHtml(response, request, http.StatusForbidden, customErrHtml)
+		OutputErrorHtml(response, request, http.StatusForbidden, customErrHtml)
 		return
 	}
 	//file_size := fi.Size()
@@ -60,12 +60,14 @@ func OutputStaticFile(response *Response, request *Request, file string, customE
 
 }
 
-func OutErrorHtml(response *Response, request *Request, httpCode int, customErrHtml map[int]string) {
+func OutputErrorHtml(response *Response, request *Request, httpCode int, customErrHtml map[int]string) {
 	//用户自定义的错误页面
-	if errHtml, exist := customErrHtml[httpCode]; exist {
-		if fi, err := os.Stat(errHtml); (err == nil || os.IsExist(err)) && fi.IsDir() != true {
-			http.ServeFile(response.Writer, request.request, errHtml)
-			return
+	if customErrHtml != nil {
+		if errHtml, exist := customErrHtml[httpCode]; exist {
+			if fi, err := os.Stat(errHtml); (err == nil || os.IsExist(err)) && fi.IsDir() != true {
+				http.ServeFile(response.Writer, request.request, errHtml)
+				return
+			}
 		}
 	}
 

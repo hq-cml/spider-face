@@ -7,11 +7,11 @@ import (
 )
 
 type Roundtrip interface {
-	Init(request *Request, response *Response, logger SpiderLogger) bool
-	SetName(name string)
-	GetName() string
-	SetAction(name string)
-	GetAction() string
+	InitRoundtrip(request *Request, response *Response, controllerName, actionName string, logger SpiderLogger) bool
+	GetControllerName() string
+	GetActionName() string
+	GetRequest() *Request
+	GetResponse() *Response
 	Param(key string, defaultValue ...string) string
 	Display(viewPath ...string)
 	Assign(key interface{}, value interface{})
@@ -50,33 +50,30 @@ type SpiderRoundtrip struct {
 	actionName     string
 }
 
-func (rp *SpiderRoundtrip) Init(request *Request, response *Response, logger SpiderLogger) bool {
+func (rp *SpiderRoundtrip) InitRoundtrip(request *Request, response *Response,
+	controllerName, actionName string, logger SpiderLogger) bool {
 	rp.request = request
 	rp.response = response
+	rp.controllerName = controllerName
+	rp.actionName = actionName
 	rp.view = NewView(logger)
 
 	return true
 }
 
-func (rp *SpiderRoundtrip) SetName(name string) {
-	if name == "" {
-		return
-	}
-	rp.controllerName = name
+func (rp *SpiderRoundtrip) GetResponse() *Response {
+	return rp.response
 }
 
-func (rp *SpiderRoundtrip) GetName() string {
+func (rp *SpiderRoundtrip) GetRequest() *Request {
+	return rp.request
+}
+
+func (rp *SpiderRoundtrip) GetControllerName() string {
 	return rp.controllerName
 }
 
-func (rp *SpiderRoundtrip) SetAction(name string) {
-	if name == "" {
-		return
-	}
-	rp.actionName = name
-}
-
-func (rp *SpiderRoundtrip) GetAction() string {
+func (rp *SpiderRoundtrip) GetActionName() string {
 	return rp.actionName
 }
 
@@ -109,11 +106,11 @@ func (rp *SpiderRoundtrip) Display(viewPath ...string) {
 func (rp *SpiderRoundtrip) Render(viewPath ...string) ([]byte, error) {
 	var viewPathName string
 	if viewPath == nil || viewPath[0] == "" {
-		viewPathName = rp.GetName() + "/" + rp.GetAction()
-		fmt.Println("viewName:", viewPathName)
+		viewPathName = rp.GetControllerName() + "/" + rp.GetActionName()
+		fmt.Println("viewPathName:", viewPathName)
 	} else {
 		viewPathName = viewPath[0]
-		fmt.Println("viewName_x:", viewPathName)
+		fmt.Println("viewPathName_x:", viewPathName)
 	}
 	return rp.view.Render(viewPathName)
 }

@@ -76,7 +76,13 @@ func genRouterNode(pattern, controller, action string) (*RouterNode, error) {
 	if pattern == "" || action == "" {
 		return nil, nil
 	}
-	urlParts := strings.Split(strings.Trim(pattern, "/"), "/")
+
+	var urlParts []string
+	if pattern == "/" {
+		urlParts = []string{"/"}
+	} else  {
+		urlParts = strings.Split(strings.Trim(pattern, "/"), "/")
+	}
 
 	router := &RouterNode{
 		UrlParts:   nil,
@@ -121,7 +127,13 @@ func (rtm *RouterManager) AnalysePath(method, url string) (string, string, map[s
 		return "", "", nil, errors.New("No match")
 	}
 
-	paths := strings.Split(strings.Trim(url, "/"), "/")
+	paths := []string{}
+	if url != "/" {
+		url = strings.Trim(url, "/")
+		paths = strings.Split(url, "/")
+	} else {
+		paths = append(paths, "/")
+	}
 	for _, rNode := range rtm.RouterTable[method] {
 		if pathParam, match := rtm.matchRouter(rNode, paths); !match {
 			continue
