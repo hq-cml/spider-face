@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 	"regexp"
+	"github.com/hq-cml/spider-face/utils/helper"
 )
 
 var (
@@ -85,7 +86,7 @@ func AddViewFunc(key string, func_name interface{}) {
 
 //初始化解析所有的模板文件
 func InitViewTemplate(viewRoot string, logger SpiderLogger) error {
-	if viewRoot == "" {
+	if viewRoot == "" || !helper.Exist(viewRoot) {
 		logger.Info("ViewPathRoot is nil~")
 		return nil
 	}
