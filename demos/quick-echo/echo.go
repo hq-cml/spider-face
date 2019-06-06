@@ -20,11 +20,19 @@ func main() {
 		return
 	}
 
-	spd.GET("/index", func(rp core.Roundtrip) { //快捷注册路由函数，一个"hello world"接口，诞生
+	spd.GET("/index", func(rp core.Roundtrip) {       //快捷注册路由函数，一个"hello world"接口，诞生
 		rp.Echo("Hello World!")
 	})
 
-	spd.GET("/json", func(rp core.Roundtrip) { //快捷注册路由函数，用json输出一个结构化的数据
+	spd.GET("/api/get", func(rp core.Roundtrip) {     //Get接口接收参数：curl 'http://ip:9529/api/get?id=aaa'
+		rp.Echo("Get参数Id是：" + rp.Param("id"))
+	})
+
+	spd.POST("/api/post", func(rp core.Roundtrip) {   //Post接口接收参数：curl -X POST 'http://ip:9529/api/post' -d 'id=aaa'
+		rp.Echo("Post参数Id是：" + rp.Param("id"))
+	})
+
+	spd.GET("/json", func(rp core.Roundtrip) {        //快捷注册路由函数，用json输出一个结构化的数据
 		m := map[string]interface{} {
 			"A": "a",
 			"B": "b",
@@ -33,5 +41,5 @@ func main() {
 		rp.OutputJson(m)
 	})
 
-	spd.Run()                                           //Run
+	spd.Run()                                                  //Run
 }
