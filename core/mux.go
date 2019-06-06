@@ -183,7 +183,7 @@ func (mux *HandlerMux) handleFoolController(request *Request, response *Response
 		funcMapDelete: mux.FoolController.funcMapDelete,
 	}
 
-	foolController.GetRoundTrip().InitRoundtrip(request, response, controllerName, actionName, mux.logger)
+	foolController.GetRoundTrip().initRoundtrip(request, response, controllerName, actionName, mux.logger)
 
 	switch request.GetMethod() {
 	case "GET":
@@ -217,7 +217,7 @@ func (mux *HandlerMux) handleNormalController(request *Request, response *Respon
 		panic("Oh my god")
 	}
 	rp := c.GetRoundTrip()
-	rp.InitRoundtrip(request, response, controllerName, actionName, mux.logger)
+	rp.initRoundtrip(request, response, controllerName, actionName, mux.logger)
 
 	//执行Action（包括前后的Hook，如果有）
 	actions := make([]reflect.Value, 0)

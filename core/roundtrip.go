@@ -7,7 +7,7 @@ import (
 )
 
 type Roundtrip interface {
-	InitRoundtrip(request *Request, response *Response, controllerName, actionName string, logger SpiderLogger) bool
+	initRoundtrip(request *Request, response *Response, controllerName, actionName string, logger SpiderLogger) bool
 	GetControllerName() string
 	GetActionName() string
 	GetRequest() *Request
@@ -50,7 +50,7 @@ type SpiderRoundtrip struct {
 	actionName     string
 }
 
-func (rp *SpiderRoundtrip) InitRoundtrip(request *Request, response *Response,
+func (rp *SpiderRoundtrip) initRoundtrip(request *Request, response *Response,
 	controllerName, actionName string, logger SpiderLogger) bool {
 	rp.request = request
 	rp.response = response
