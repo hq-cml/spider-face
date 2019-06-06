@@ -1,9 +1,9 @@
 package main
 
 /*
- * 利用通用注册方式
- * 注册一个标准的controller，该controller拥有4个路由规则，每个规则都对应有Action（接口逻辑）
- * 并且，这4个规则拥不同的参数接收方式
+ * 利用通用注册方式实现一个api项目
+ * 注册一个标准的controller，该controller拥有5个路由规则，每个规则都对应有Action（接口逻辑）
+ * 并且，这5个规则拥不同的参数接收方式
  *
  * 如果是一个相对大型的项目，需要考虑组织结构，提供http的接口，通用注册是合适的选择
  */
@@ -27,6 +27,7 @@ func (hello *HelloController) GetAllRouters() []core.ControllerRouter { //TODO �
 		{Method: http.MethodGet, Location: "/index/:id", Action:"IndexAction",},  //能接收普通参数和路径参数
 		{Method: http.MethodGet, Location: "/index/*", Action:"IndexAction",},    //能接收普通参数和pathinfo参数
 		{Method: http.MethodPost, Location: "/index/post", Action:"PostAction",}, //能接Post参数
+		{Method: http.MethodGet, Location: "/json", Action:"JsonAction",},
 	}
 }
 func (hello *HelloController) GetRoundTrip() core.Roundtrip {
@@ -45,6 +46,21 @@ func (hello *HelloController) IndexAction(rp core.Roundtrip) {
 //curl -X POST 'http://192.168.110.133:9529/index/post' -d 'id=aaa'
 func (hello *HelloController) PostAction(rp core.Roundtrip) {
 	rp.Echo(fmt.Sprintf("参数Id: %v\n", rp.Param("id")))
+}
+
+//输出结构化的Json
+func (hello *HelloController) JsonAction(rp core.Roundtrip) {
+	if rp.Param("encode") == "yes" {
+		rp.OutputJson(map[string]string {
+			"a":"中文",
+			"b":"yingwen",
+		}, true)     //utf8编码中文
+	} else {
+		rp.OutputJson(map[string]string {
+			"a":"中文",
+			"b":"yingwen",
+		})
+	}
 }
 
 func main() {

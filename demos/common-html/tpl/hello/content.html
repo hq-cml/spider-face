@@ -1,0 +1,17 @@
+{{define "hello/content"}}
+<h1>:)</h1>
+<p>hello spider~</p>
+<br>
+<h1>
+    <img src="/img/logo.jpg">
+</h1>
+<h3>
+    当前时间: {{date "Y-m-d H:i:s" .nowtime}} <!-- 自定义函数date -->
+    <br>
+    id传参: {{.id}}
+    <br>
+    name传参: {{.name}}
+    <br>
+    age传参: {{.age}}
+</h3>
+{{end}}
