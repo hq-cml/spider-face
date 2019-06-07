@@ -21,8 +21,8 @@ type HelloController struct {
 }
 
 //实现core.Controller接口
-func (hello *HelloController) GetAllRouters() []core.ControllerRouter { //TODO 这种方式不够友好
-	return []core.ControllerRouter{
+func (hello *HelloController) GetAllRouters() []core.RouteEntry { //TODO 这种方式不够友好
+	return []core.RouteEntry{
 		{Method: http.MethodGet, Location: "/index", Action:"IndexAction",},
 		{Method: http.MethodGet, Location: "/index/:id", Action:"IndexAction",},
 		{Method: http.MethodGet, Location: "/index/*", Action:"IndexAction",},

@@ -1,20 +1,14 @@
 package core
 
 type SpiderConfig struct {
-	BindAddr      string
-	StaticPath     string //静态文件根目录
-	LogPath       string
-	LogLevel       string
+	BindAddr            string
+	StaticPath          string //静态文件根目录
+	LogPath             string
+	LogLevel            string
+	TplPath             string
 
-	logger        SpiderLogger
-
-	TplPath string
-
-	//ReadTimeout   int
-	//WriteTimeout  int
-	//MaxHeaderByte int
-
-	//HttpErrorHtml map[int]string
+	CustomHttpErrorHtml map[int]string    //定制化的错误页面 httpCode => customErr.html
+	CustomRewriteRule   map[string]string
 }
 
 type SpiderLogger interface {
@@ -37,10 +31,6 @@ type SpiderLogger interface {
 	Fatalf(format string, v ...interface{})
 	Fatalln(v ...interface{})
 	Fatal(v ...interface{})
-}
-
-type DefaultLogger struct {
-
 }
 
 var GlobalConf *SpiderConfig

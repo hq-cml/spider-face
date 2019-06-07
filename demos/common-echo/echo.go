@@ -15,25 +15,34 @@ import (
 	"net/http"
 )
 
-//标准的Controller，必须以Controller后缀结尾
+//创建标准的Controller，必须以Controller后缀结尾
+//并实现core.Controller接口
 type HelloController struct {
 	spdrp core.SpiderRoundtrip
+	entries []core.RouteEntry
+}
+func (hello *HelloController) GetAllRouters() []core.RouteEntry {
+	return hello.entries
+}
+func (hello *HelloController) GetRoundTrip() core.Roundtrip {
+	return &hello.spdrp
 }
 
-//实现core.Controller接口
-func (hello *HelloController) GetAllRouters() []core.ControllerRouter { //TODO 这种方式不够友好
-	return []core.ControllerRouter{
+//创建一个controller，并绑定路由
+func NewHelloAction() *HelloController{
+	hc := &HelloController{}
+	hc.entries = []core.RouteEntry{
 		{Method: http.MethodGet, Location: "/index", Action:"IndexAction",},      //能接收普通参数
 		{Method: http.MethodGet, Location: "/index/:id", Action:"IndexAction",},  //能接收普通参数和路径参数
 		{Method: http.MethodGet, Location: "/index/*", Action:"IndexAction",},    //能接收普通参数和pathinfo参数
 		{Method: http.MethodPost, Location: "/index/post", Action:"PostAction",}, //能接Post参数
 		{Method: http.MethodGet, Location: "/json", Action:"JsonAction",},
 	}
-}
-func (hello *HelloController) GetRoundTrip() core.Roundtrip {
-	return &hello.spdrp
+
+	return hc
 }
 
+//创建HelloController所拥有的Action
 //curl 'http://192.168.110.133:9529/index/aaa'
 //curl 'http://192.168.110.133:9529/index/name/hq/age/28'
 func (hello *HelloController) IndexAction(rp core.Roundtrip) {
@@ -71,8 +80,10 @@ func main() {
 		return
 	}
 
+	hc := NewHelloAction()                              //创建需要持有的controller，并绑定路由
+
 	if err = spd.RegisterController([]core.Controller{  //注册controller
-		&HelloController{},
+		hc,
 	}); err != nil {
 		fmt.Println(err)
 		return

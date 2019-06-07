@@ -20,12 +20,12 @@ var (
 
 //多路复用器，用来替换掉golang默认的DefaultServerMux
 type HandlerMux struct {
-	logger         SpiderLogger
-	rewriter       *Rewriter               //地址重写器，地址重写工作在路由之前完成
-    customErrHtml  map[int]string
-	routerManger   *RouterManager          //路由管理器，负责实际的请求路由到对应的Controller/Action
-	controllerMap  map[string]reflect.Type //所有controller的动态类型，用于controller实例还原
-	FoolController *FoolishController      //Spider自带的默认Controller，用于快捷注册使用
+	logger           SpiderLogger
+	rewriter         *Rewriter               //地址重写器，地址重写工作在路由之前完成
+    customErrHtml    map[int]string
+	routerManger     *RouterManager          //路由管理器，负责实际的请求路由到对应的Controller/Action
+	controllerMap    map[string]reflect.Type //所有controller的动态类型，用于controller实例还原
+	SpeedyController *SpeedyController       //Spider自带的默认Controller，用于快捷注册使用
 }
 
 //create Application object
@@ -44,10 +44,10 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger,
 
 	//生成mux
 	mux := &HandlerMux {
-		logger:         logger,
-		customErrHtml:  customErrHtml,
-		controllerMap:  map[string]reflect.Type{},
-		FoolController: NewFoolishController(),
+		logger:           logger,
+		customErrHtml:    customErrHtml,
+		controllerMap:    map[string]reflect.Type{},
+		SpeedyController: NewSpeedyController(),
 	}
 
 	//生成rewriter
@@ -163,8 +163,8 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	request.pathParams = pathParam
 
-	if controllerName == FOOLISH_CONTROLLER_NAME {
-		mux.handleFoolController(request, response, controllerName, actionName)
+	if controllerName == SPEEDY_CONTROLLER_NAME {
+		mux.handleSpeedyController(request, response, controllerName, actionName)
 	} else {
 		mux.handleNormalController(request, response, controllerName, actionName)
 	}
@@ -172,30 +172,30 @@ func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {
 	response.SetHeader("Connection", request.GetHeader("Connection"))
 }
 
-func (mux *HandlerMux) handleFoolController(request *Request, response *Response,
+func (mux *HandlerMux) handleSpeedyController(request *Request, response *Response,
 	controllerName, actionName string) {
 
-	//创建一个Controller实时实例
-	foolController := FoolishController{
-		funcMapGet: mux.FoolController.funcMapGet,
-		funcMapPost: mux.FoolController.funcMapPost,
-		funcMapPut: mux.FoolController.funcMapPut,
-		funcMapDelete: mux.FoolController.funcMapDelete,
+	//还原创建出一个Controller实时实例
+	spdController := SpeedyController{
+		funcMapGet: mux.SpeedyController.funcMapGet,
+		funcMapPost: mux.SpeedyController.funcMapPost,
+		funcMapPut: mux.SpeedyController.funcMapPut,
+		funcMapDelete: mux.SpeedyController.funcMapDelete,
 	}
-
-	foolController.GetRoundTrip().initRoundtrip(request, response, controllerName, actionName, mux.logger)
+	//还原创建roundtrip
+	spdController.GetRoundTrip().initRoundtrip(request, response, controllerName, actionName, mux.logger)
 
 	switch request.GetMethod() {
-	case "GET":
-		foolController.DefaultGetAction()
-	case "POST":
-		foolController.DefaultPostAction()
-	case "PUT":
-		foolController.DefaultPutAction()
-	case "DELETE":
-		foolController.DefaultDeleteAction()
+	case http.MethodGet:
+		spdController.SpeedyGetAction()
+	case http.MethodPost:
+		spdController.SpeedyPostAction()
+	case http.MethodPut:
+		spdController.SpeedyPutAction()
+	case http.MethodDelete:
+		spdController.SpeedyDeleteAction()
 	default:
-		foolController.DefaultGetAction()
+		spdController.SpeedyGetAction()
 	}
 
 	//TODO beforeAction
@@ -264,33 +264,33 @@ func (mux *HandlerMux) ValueOfController(controllerName string) (reflect.Value, 
 }
 
 func (mux *HandlerMux) GET(location string , acFunc ActionFunc) {
-	foolController := mux.FoolController
-	foolController.routers = append(foolController.routers, ControllerRouter {
-		Method:"GET", Location: location, Action:"DefaultGetAction",
+	spdController := mux.SpeedyController
+	spdController.routers = append(spdController.routers, RouteEntry{
+		Method: http.MethodGet, Location: location, Action:"SpeedyGetAction",
 	})
-	foolController.funcMapGet[location] = acFunc
+	spdController.funcMapGet[location] = acFunc
 }
 
 func (mux *HandlerMux) POST(location string , acFunc ActionFunc) {
-	foolController := mux.FoolController
-	foolController.routers = append(foolController.routers, ControllerRouter {
-		Method:"POST", Location: location, Action:"DefaultPostAction",
+	spdController := mux.SpeedyController
+	spdController.routers = append(spdController.routers, RouteEntry{
+		Method: http.MethodPost, Location: location, Action:"SpeedyPostAction",
 	})
-	foolController.funcMapPost[location] = acFunc
+	spdController.funcMapPost[location] = acFunc
 }
 
 func (mux *HandlerMux) PUT(location string , acFunc ActionFunc) {
-	foolController := mux.FoolController
-	foolController.routers = append(foolController.routers, ControllerRouter {
-		Method:"PUT", Location: location, Action:"DefaultPutAction",
+	spdController := mux.SpeedyController
+	spdController.routers = append(spdController.routers, RouteEntry{
+		Method: http.MethodPut, Location: location, Action:"SpeedyPutAction",
 	})
-	foolController.funcMapPut[location] = acFunc
+	spdController.funcMapPut[location] = acFunc
 }
 
 func (mux *HandlerMux) DELETE(location string , acFunc ActionFunc) {
-	foolController := mux.FoolController
-	foolController.routers = append(foolController.routers, ControllerRouter {
-		Method:"DELETE", Location: location, Action:"DefaultDeleteAction",
+	spdController := mux.SpeedyController
+	spdController.routers = append(spdController.routers, RouteEntry{
+		Method: http.MethodDelete, Location: location, Action:"SpeedyDeleteAction",
 	})
-	foolController.funcMapDelete[location] = acFunc
+	spdController.funcMapDelete[location] = acFunc
 }

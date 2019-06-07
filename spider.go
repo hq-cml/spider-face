@@ -44,15 +44,18 @@ func NewSpider(sConfig *core.SpiderConfig,
 	logger.Debugf("TplPath: %v", sConfig.TplPath)
 	logger.Debugf("StaticPath: %v", sConfig.StaticPath)
 
-	//TODO
-	customErrHtml := map[int]string{}
-	rewriteRule := map[string]string {
-		"/test/rewrite": "/index?name=123",
-		"/test/rewrite/(.*)/(.*)": "/index?id=$1&name=$2",
+	if sConfig.CustomHttpErrorHtml == nil {
+		sConfig.CustomHttpErrorHtml = map[int]string{}
+	}
+	if sConfig.CustomRewriteRule != nil {
+		//"/test/rewrite" => "/index?name=123",
+		//"/test/rewrite/(.*)/(.*)" => "/index?id=$1&name=$2",
+		sConfig.CustomRewriteRule = map[string]string{}
 	}
 
 	//创建serverMux
-	mux, err := core.NewHandlerMux(sConfig, logger, customErrHtml, rewriteRule)
+	mux, err := core.NewHandlerMux(sConfig, logger,
+		sConfig.CustomHttpErrorHtml, sConfig.CustomRewriteRule)
 	if err != nil {
 		return nil, err
 	}
@@ -93,9 +96,12 @@ func (spd *Spider) RegisterController(controllers []core.Controller) error {
 
 func (spd *Spider) Run() {
 	//将Default注册到Mux中去
-	spd.MuxHander.RegisterController([]core.Controller{
-		spd.MuxHander.FoolController,
+	err := spd.RegisterController([]core.Controller{
+		spd.MuxHander.SpeedyController,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	//信号处理函数
 	//go srv.signalHandle()

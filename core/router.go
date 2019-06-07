@@ -11,12 +11,12 @@ import (
 type RouterManager struct {
 	logger       SpiderLogger
 
-	RouterTable  map[string][]*RouterNode  //路由表，核心 method=>list(node)
-	UniqKeyMap   map[string]string         //用于防重复校验
+	RouterTable  map[string][]*RouteNode //路由表，核心 method=>list(node)
+	UniqKeyMap   map[string]string       //用于防重复校验
 }
 
 //一条路由规则
-type RouterNode struct {
+type RouteNode struct {
 	UrlParts   []PathPartition
 	NormalNum  int             //整个path中normal段的数量
 	Controller string
@@ -35,7 +35,7 @@ type PathPartition struct {
 func NewRouterManager(logger SpiderLogger) *RouterManager {
 	return &RouterManager{
 		logger:      logger,
-		RouterTable: make(map[string][]*RouterNode),
+		RouterTable: make(map[string][]*RouteNode),
 		UniqKeyMap:  make(map[string]string),
 	}
 }
@@ -71,8 +71,8 @@ func (rtm *RouterManager) RegisterRouter(controllerName string, controller Contr
 	return nil
 }
 
-// create rewrite RouterNode
-func genRouterNode(pattern, controller, action string) (*RouterNode, error) {
+// create rewrite RouteNode
+func genRouterNode(pattern, controller, action string) (*RouteNode, error) {
 	if pattern == "" || action == "" {
 		return nil, nil
 	}
@@ -84,7 +84,7 @@ func genRouterNode(pattern, controller, action string) (*RouterNode, error) {
 		urlParts = strings.Split(strings.Trim(pattern, "/"), "/")
 	}
 
-	router := &RouterNode{
+	router := &RouteNode{
 		UrlParts:   nil,
 		NormalNum:  0,
 		Controller: controller,
@@ -146,7 +146,7 @@ func (rtm *RouterManager) AnalysePath(method, url string) (string, string, map[s
 }
 
 //判断一个给定的rNode和路径paths是否匹配
-func (rtm *RouterManager) matchRouter(rNode *RouterNode, paths []string) (map[string]string, bool) {
+func (rtm *RouterManager) matchRouter(rNode *RouteNode, paths []string) (map[string]string, bool) {
 	pathParam := map[string]string{}
 	var cnt int
 	for idx, part := range paths {
