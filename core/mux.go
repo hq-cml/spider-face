@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 	"errors"
+	"time"
 )
 
 //TODO 这个扩展成通用的Hook
@@ -75,9 +76,7 @@ func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 		if strings.Index(typ.Name(), CONTROLLER_SUFFIX) == -1 {
 			return errors.New("Invalid Controller Name! Must End with 'Controller'")
 		}
-		//name := strings.ToLower(strings.TrimSuffix(typ.Name(), CONTROLLER_SUFFIX))
 		name := strings.TrimSuffix(typ.Name(), CONTROLLER_SUFFIX)
-
 		//名字验重
 		if _, exist := mux.controllerMap[name]; exist {
 			mux.logger.Errf("Conflicting controller: %v", name)
@@ -102,32 +101,23 @@ func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 
 //实现http.Handler接口
 func (mux *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//start_time := time.Now()
+	startTime := time.Now()
 
 	//尝试匹配rewrite规则
 	if r.URL.Path != "/" {
 		mux.rewriter.TryMatchRewrite(r)
 	}
 
+	//实施处理
 	mux.DispatchHandler(w, r)
 
-	//end_time := time.Now()
-	//
-	//request_time := float64(end_time.UnixNano()-start_time.UnixNano()) / 1000000000
-	//
-	//log_format := "%s - [%s] %s %s %s %s %.5f \"%s\"" //ip - [time] Method uri scheme status request_time agent
-
-	//access_log := fmt.Sprintf(log_format,
-	//	mux.Isset(r.RemoteAddr),
-	//	Date("Y/m/d H:i:s", start_time),
-	//	mux.Isset(r.Method),
-	//	mux.Isset(r.URL.RequestURI()),
-	//	mux.Isset(r.Proto),
-	//	mux.Isset(w.Header().Get("Status")),
-	//	request_time,
-	//	mux.Isset(r.Header.Get("User-Agent")),
-	//)
-	//logger.AccessLog(access_log)
+	//收尾日志
+	endTime := time.Now()
+	costDuration := float64(endTime.UnixNano() - startTime.UnixNano()) / 1000000
+	format := "AccessLog: Method=[%s]; Uri=[%s]; ClientIp=[%s]; StartTime=[%s]; CostTime=[%f] ms; Status=[%s]; User-Agent=[%s]" //ip - [time] Method uri scheme status request_time agent
+	mux.logger.Infof(format, r.Method, r.URL.RequestURI(),
+		r.RemoteAddr, Date("Y-m-d H:i:s", startTime), costDuration,
+		w.Header().Get("Status"), r.Header.Get("User-Agent"))
 }
 
 func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {

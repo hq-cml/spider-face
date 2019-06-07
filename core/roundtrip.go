@@ -3,7 +3,6 @@ package core
 import (
 	"mime/multipart"
 	"net/http"
-	"fmt"
 )
 
 type Roundtrip interface {
@@ -107,10 +106,8 @@ func (rp *SpiderRoundtrip) Render(viewPath ...string) ([]byte, error) {
 	var viewPathName string
 	if viewPath == nil || viewPath[0] == "" {
 		viewPathName = rp.GetControllerName() + "/" + rp.GetActionName()
-		fmt.Println("viewPathName:", viewPathName)
 	} else {
 		viewPathName = viewPath[0]
-		fmt.Println("viewPathName_x:", viewPathName)
 	}
 	return rp.view.Render(viewPathName)
 }

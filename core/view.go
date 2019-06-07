@@ -50,16 +50,7 @@ func (vi *View) Render(viewName string) ([]byte, error) {
 	if ViewPathRoot == "" {
 		return []byte(""), errors.New("TplPath not set")
 	}
-	viewName = strings.ToLower(viewName)
-	//TODO
-	//if RunMod == "dev" {
-	//	t := template.New(view_name).Delims("{{", "}}").Funcs(view_func)
-	//	t, err := parseTemplate(t, ViewRoot+"/"+view_name+ViewExt)
-	//	if err != nil || t == nil {
-	//		return []byte(""), err
-	//	}
-	//	ViewTemplates[view_name] = t
-	//}
+	viewName = strings.ToLower(viewName) //全部转小写，这很重要，路径上不要出现大写字符
 
 	if tpl, exist := ViewTemplates[viewName]; !exist {
 		return []byte(""), errors.New("template " + ViewPathRoot + "/" + viewName + ViewExt + " not found or compile failed")

@@ -55,7 +55,7 @@ func OutputStaticFile(response *Response, request *Request, file string, customE
 	//mod_time := fi.ModTime()
 
 	http.ServeFile(response.Writer, request.request, filePath)
-
+	return
 	//TODO 压缩
 
 }

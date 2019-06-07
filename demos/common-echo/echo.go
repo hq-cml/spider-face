@@ -30,7 +30,7 @@ func main() {
 		{Method: http.MethodGet,  Location: "/json",         Action:"JsonAction",},     //输出Json
 	})
 
-	if err = spd.RegisterController([]core.Controller{  //注册controller
+	if err := spd.RegisterController([]core.Controller{  //注册controller
 		hc,
 	}); err != nil {
 		fmt.Println(err)

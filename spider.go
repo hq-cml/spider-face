@@ -130,6 +130,8 @@ func (spd *Spider) Run() {
 	spd.logger.Infof("Spider start to run...")
 	spd.HttpServer.ListenAndServe()
 
+	//spd.HttpServer.Close()
+
 	//logger.RunLog("[Notice] Waiting for connections to finish...")
 	//connWg.Wait()
 	//serverStat = STATE_TERMINATE
