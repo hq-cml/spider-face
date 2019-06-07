@@ -7,6 +7,9 @@ import (
 	"github.com/hq-cml/spider-face/core"
 	"github.com/hq-cml/spider-face/utils/helper"
 	"github.com/hq-cml/spider-face/utils/log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 type Spider struct {
@@ -119,24 +122,34 @@ func (spd *Spider) Run() {
 		panic(err)
 	}
 
-	//信号处理函数
-	//go srv.signalHandle()
-
-	//serverStat = STATE_RUNNING
+	//异步信号处理
+	go spd.signalHandle()
 
 	//listen loop
-	//spd.Serve(srv.listener)
-
 	spd.logger.Infof("Spider start to run...")
 	spd.HttpServer.ListenAndServe()
 
-	//spd.HttpServer.Close()
-
-	//logger.RunLog("[Notice] Waiting for connections to finish...")
-	//connWg.Wait()
-	//serverStat = STATE_TERMINATE
-	//logger.RunLog("[Notice] Server shuttdown.")
+	spd.logger.Infof("The Http Server is Closed!")
+	spd.logger.Info("Bye Bye~")
 	return
+}
+
+//异步信号处理
+func (spd *Spider) signalHandle() {
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
+
+	for {
+		sig := <-ch
+		switch sig {
+		case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+			//TODO 强行关闭不优雅，后续改成Shutdown
+			spd.HttpServer.Close()
+			spd.logger.Infof("Spider Recv Signal: %v", sig)
+		default:
+			spd.logger.Infof("Unknown signal: %v", sig)
+		}
+	}
 }
 
 //快捷注册，向SpeedController中注入路由规则
@@ -163,4 +176,5 @@ func (spd *Spider) DELETE(location string , acFunc core.ActionFunc) {
 //压缩 ??
 //https ??
 //热重启??
+//优雅退出Shutdown + context
 //MIME??

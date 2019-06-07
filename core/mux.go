@@ -103,17 +103,17 @@ func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 func (mux *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
-	//尝试匹配rewrite规则
+	//尝试匹配rewrite规则（如果有）
 	if r.URL.Path != "/" {
 		mux.rewriter.TryMatchRewrite(r)
 	}
 
-	//实施处理
+	//分派处理
 	mux.DispatchHandler(w, r)
 
 	//收尾日志
 	endTime := time.Now()
-	costDuration := float64(endTime.UnixNano() - startTime.UnixNano()) / 1000000
+	costDuration := float64(endTime.UnixNano() - startTime.UnixNano()) / 1000000 //毫秒
 	format := "AccessLog: Method=[%s]; Uri=[%s]; ClientIp=[%s]; StartTime=[%s]; CostTime=[%f] ms; Status=[%s]; User-Agent=[%s]" //ip - [time] Method uri scheme status request_time agent
 	mux.logger.Infof(format, r.Method, r.URL.RequestURI(),
 		r.RemoteAddr, Date("Y-m-d H:i:s", startTime), costDuration,
