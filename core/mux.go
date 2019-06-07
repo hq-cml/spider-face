@@ -31,7 +31,7 @@ type HandlerMux struct {
 
 //create Application object
 func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger,
-		customErrHtmls map[int]string, rewriteRule map[string]string) (*HandlerMux, error) {
+		customErrHtmls map[int]string, rewriteRule map[string]string) (*HandlerMux) {
 
 	//初始化用户自定义的错误页面,如果有
 	customErrHtml := map[int]string{}
@@ -64,7 +64,7 @@ func NewHandlerMux(sConfig *SpiderConfig, logger SpiderLogger,
 	mux.routerManger = NewRouterManager(logger)
 
 	mux.logger.Info("ServerMux Init ~")
-	return mux, nil
+	return mux
 }
 
 //注册控制器

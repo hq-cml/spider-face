@@ -16,12 +16,10 @@ import (
 )
 
 func main() {
-	spd, err := spider.NewSpider(&core.SpiderConfig{    //生成Spider实例
+	spd := spider.NewSpider(&core.SpiderConfig{         //生成Spider实例
 		BindAddr: ":9529",    						    //监听地址:端口
 	}, nil)
-	if err != nil {
-		return
-	}
+
 
 	hc := controllers.NewHelloAction()                  //创建需要持有的controller，并绑定路由
 	hc.SetRouteEntries([]core.RouteEntry{
@@ -29,12 +27,12 @@ func main() {
 		{Method: http.MethodGet, Location: "/index/:id", Action:"IndexAction",},
 	})
 
-	if err = spd.RegisterController([]core.Controller{  //注册controller
+	if err := spd.RegisterController([]core.Controller{  //注册controller
 		hc,
 	}); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	spd.Run()                                           //Run
+	spd.Run()                                            //Run
 }

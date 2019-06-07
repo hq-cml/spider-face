@@ -13,12 +13,7 @@ import (
 )
 
 func main() {
-	spd, err := spider.NewSpider(&core.SpiderConfig{    //生成Spider实例
-		BindAddr: ":9529",    						    //监听地址:端口
-	}, nil)
-	if err != nil {
-		return
-	}
+	spd := spider.NewSpider(nil, nil)          //生成Spider实例, 默认地址:端口
 
 	spd.GET("/index", func(rp core.Roundtrip) {       //快捷注册路由函数，一个"hello world"接口，诞生
 		rp.Echo("Hello World!")

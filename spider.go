@@ -2,8 +2,8 @@ package spider
 
 import (
 	"fmt"
+	"time"
 	"net/http"
-	"errors"
 	"github.com/hq-cml/spider-face/core"
 	"github.com/hq-cml/spider-face/utils/helper"
 	"github.com/hq-cml/spider-face/utils/log"
@@ -17,19 +17,10 @@ type Spider struct {
 }
 
 //创建spider实例
-func NewSpider(sConfig *core.SpiderConfig,
-		 logger core.SpiderLogger) (*Spider, error) {
-
-	if sConfig.BindAddr == "" {
-		return nil, errors.New("server Addr can't be empty...[ip:port]")
-	}
-
-	//如果没有模板路径和静态文件路径，则用默认的
-	if sConfig.TplPath == "" {
-		sConfig.TplPath = fmt.Sprintf("%s/tpl", helper.GetCurrentDir())
-	}
-	if sConfig.StaticPath == "" {
-		sConfig.StaticPath = fmt.Sprintf("%s/static", helper.GetCurrentDir())
+func NewSpider(sConfig *core.SpiderConfig, logger core.SpiderLogger) (*Spider) {
+	//默认的config实例
+	if sConfig == nil {
+		sConfig = &core.SpiderConfig{}
 	}
 
 	//如果用户没有给定logger，则使用默认的logger
@@ -41,9 +32,21 @@ func NewSpider(sConfig *core.SpiderConfig,
 		}
 	}
 
-	logger.Debugf("TplPath: %v", sConfig.TplPath)
-	logger.Debugf("StaticPath: %v", sConfig.StaticPath)
+	//如果没有给定地址，那么就用默认的
+	if sConfig.BindAddr == "" {
+		logger.Info("No Addr. Use Default :9529")
+		sConfig.BindAddr = ":9529"
+	}
 
+	//如果没有模板路径和静态文件路径，则用默认的
+	if sConfig.TplPath == "" {
+		sConfig.TplPath = fmt.Sprintf("%s/tpl", helper.GetCurrentDir())
+	}
+	if sConfig.StaticPath == "" {
+		sConfig.StaticPath = fmt.Sprintf("%s/static", helper.GetCurrentDir())
+	}
+
+	//用户自定义的错误页面和重写规则
 	if sConfig.CustomHttpErrorHtml == nil {
 		sConfig.CustomHttpErrorHtml = map[int]string{}
 	}
@@ -53,17 +56,29 @@ func NewSpider(sConfig *core.SpiderConfig,
 		sConfig.CustomRewriteRule = map[string]string{}
 	}
 
-	//创建serverMux
-	mux, err := core.NewHandlerMux(sConfig, logger,
-		sConfig.CustomHttpErrorHtml, sConfig.CustomRewriteRule)
-	if err != nil {
-		return nil, err
+	//用户自定义的timeout和maxheader
+	if sConfig.ReadTimeout <= 0 {
+		sConfig.ReadTimeout = 30
 	}
+	if sConfig.WriteTimeout <= 0 {
+		sConfig.WriteTimeout = 30
+	}
+	if sConfig.MaxHeaderByte <= 0 {
+		sConfig.MaxHeaderByte = 1 << 20
+	}
+
+	//创建serverMux
+	mux := core.NewHandlerMux(sConfig, logger,
+		sConfig.CustomHttpErrorHtml, sConfig.CustomRewriteRule)
 
 	//创建http.server实例，替换掉golang自带的handler
 	server := &http.Server {
 		Addr: sConfig.BindAddr,
 		Handler: mux,
+
+		ReadTimeout:    time.Duration(sConfig.ReadTimeout * int64(time.Second)),
+		WriteTimeout:   time.Duration(sConfig.WriteTimeout * int64(time.Second)),
+		MaxHeaderBytes: 1 << 20,
 	}
 
 	//创建spider实例
@@ -75,15 +90,15 @@ func NewSpider(sConfig *core.SpiderConfig,
 	}
 
 	//初始化解析视图模板文件
-	err = core.InitViewTemplate(spd.Config.TplPath, spd.logger)
-	if err != nil {
-		return nil, err
-	}
+	core.InitViewTemplate(spd.Config.TplPath, spd.logger)
 
+	spd.logger.Debugf("TplPath: %v", sConfig.TplPath)
+	spd.logger.Debugf("StaticPath: %v", sConfig.StaticPath)
 	spd.logger.Info("Spider init success!")
-	return spd, nil
+	return spd
 }
 
+//注册controller
 func (spd *Spider) RegisterController(controllers []core.Controller) error {
 	//注册控制器
 	err := spd.MuxHander.RegisterController(controllers)
@@ -94,6 +109,7 @@ func (spd *Spider) RegisterController(controllers []core.Controller) error {
 	return nil
 }
 
+//Run
 func (spd *Spider) Run() {
 	//将Default注册到Mux中去
 	err := spd.RegisterController([]core.Controller{

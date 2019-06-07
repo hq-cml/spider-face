@@ -7,6 +7,10 @@ type SpiderConfig struct {
 	LogLevel            string
 	TplPath             string
 
+	ReadTimeout   		int64
+	WriteTimeout  		int64
+	MaxHeaderByte 		int64
+
 	CustomHttpErrorHtml map[int]string    //定制化的错误页面 httpCode => customErr.html
 	CustomRewriteRule   map[string]string
 }

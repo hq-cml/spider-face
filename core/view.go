@@ -85,10 +85,10 @@ func AddViewFunc(key string, func_name interface{}) {
 }
 
 //初始化解析所有的模板文件
-func InitViewTemplate(viewRoot string, logger SpiderLogger) error {
+func InitViewTemplate(viewRoot string, logger SpiderLogger) {
 	if viewRoot == "" || !helper.Exist(viewRoot) {
 		logger.Info("ViewPathRoot is nil~")
-		return nil
+		return
 	}
 	ViewPathRoot = viewRoot
 	templateFiles = make(map[string]string)
@@ -136,7 +136,7 @@ func InitViewTemplate(viewRoot string, logger SpiderLogger) error {
 		logger.Infof("Load parse:%s=> %s", name, filePath)
 	}
 
-	return nil
+	return
 }
 
 //找到文件对应的全部嵌套子模板
