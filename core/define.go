@@ -41,3 +41,7 @@ const (
 	CONTROLLER_SUFFIX      string       = "Controller"
 	ACTION_SUFFIX          string       = "Action"
 )
+
+const (
+	PATH_INFO_IDENTITY string = "***"
+)

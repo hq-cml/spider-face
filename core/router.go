@@ -98,13 +98,13 @@ func genRouterNode(pattern, controller, action string) (*RouteNode, error) {
 				Value: part[1:],
 				Type: "var",
 			})
-		} else if part == "*" { //Pathinfo的参数形式/yera/2019/month/5/day/10
+		} else if part == PATH_INFO_IDENTITY { //Pathinfo的参数形式/yera/2019/month/5/day/10
 			//pathinfo模式，*必须是最后一段
 			if idx != len(urlParts) - 1 {
 				return nil, errors.New("Pathinfo Error!")
 			}
 			partitions = append(partitions, PathPartition{
-				Value: "*",
+				Value: PATH_INFO_IDENTITY,
 				Type: "pathinfo",
 			})
 			break

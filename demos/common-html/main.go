@@ -1,17 +1,17 @@
 package main
-
 /*
- * 利用通用注册方式实现一个api项目
- * 注册一个标准的controller，该controller拥有5个路由规则，每个规则都对应有Action（接口逻辑）
- * 并且，这5个规则拥不同的参数接收方式
+ * 利用通用注册方式实现一个web项目
+ * 注册一个标准的controller，该controller拥有3个路由规则，每个规则都对应有Action（接口逻辑）
+ * 并且，这3个规则拥不同的参数接收方式
  *
- * 如果是一个相对大型的项目，需要考虑组织结构，提供http的接口，通用注册是合适的选择
+ * 如果是一个相对大型的项目，需要考虑组织结构，提供web功能，通用注册是合适的选择
  */
+
 import (
-	"fmt"
 	"github.com/hq-cml/spider-face/core"
 	"github.com/hq-cml/spider-face"
-	"github.com/hq-cml/spider-face/demos/common-echo/controllers"
+	"fmt"
+	"github.com/hq-cml/spider-face/demos/common-html/controllers"
 )
 
 func main() {
