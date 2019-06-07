@@ -121,20 +121,21 @@ func (spd *Spider) Run() {
 	return
 }
 
+//快捷注册，向SpeedController中注入路由规则
 func (spd *Spider) GET(location string , acFunc core.ActionFunc) {
-	spd.MuxHander.GET(location, acFunc)
+	spd.MuxHander.SpeedyController.GET(location, acFunc)
 }
 
 func (spd *Spider) POST(location string , acFunc core.ActionFunc) {
-	spd.MuxHander.POST(location, acFunc)
+	spd.MuxHander.SpeedyController.POST(location, acFunc)
 }
 
 func (spd *Spider) PUT(location string , acFunc core.ActionFunc) {
-	spd.MuxHander.PUT(location, acFunc)
+	spd.MuxHander.SpeedyController.PUT(location, acFunc)
 }
 
 func (spd *Spider) DELETE(location string , acFunc core.ActionFunc) {
-	spd.MuxHander.DELETE(location, acFunc)
+	spd.MuxHander.SpeedyController.DELETE(location, acFunc)
 }
 
 //TODO

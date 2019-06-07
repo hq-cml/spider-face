@@ -12,6 +12,7 @@ import (
 	"github.com/hq-cml/spider-face"
 	"fmt"
 	"github.com/hq-cml/spider-face/demos/common-html/controllers"
+	"net/http"
 )
 
 func main() {
@@ -23,6 +24,10 @@ func main() {
 	}
 
 	hc := controllers.NewHelloAction()                  //创建需要持有的controller，并绑定路由
+	hc.SetRouteEntries([]core.RouteEntry{
+		{Method: http.MethodGet, Location: "/index",     Action:"IndexAction",},
+		{Method: http.MethodGet, Location: "/index/:id", Action:"IndexAction",},
+	})
 
 	if err = spd.RegisterController([]core.Controller{  //注册controller
 		hc,

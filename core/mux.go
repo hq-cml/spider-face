@@ -25,6 +25,7 @@ type HandlerMux struct {
     customErrHtml    map[int]string
 	routerManger     *RouterManager          //路由管理器，负责实际的请求路由到对应的Controller/Action
 	controllerMap    map[string]reflect.Type //所有controller的动态类型，用于controller实例还原
+
 	SpeedyController *SpeedyController       //Spider自带的默认Controller，用于快捷注册使用
 }
 
@@ -182,7 +183,7 @@ func (mux *HandlerMux) handleSpeedyController(request *Request, response *Respon
 		funcMapPut: mux.SpeedyController.funcMapPut,
 		funcMapDelete: mux.SpeedyController.funcMapDelete,
 	}
-	//还原创建roundtrip
+	//还原创建Controller实例的roundtrip
 	spdController.GetRoundTrip().initRoundtrip(request, response, controllerName, actionName, mux.logger)
 
 	switch request.GetMethod() {
@@ -263,34 +264,3 @@ func (mux *HandlerMux) ValueOfController(controllerName string) (reflect.Value, 
 	return valueOfController, nil
 }
 
-func (mux *HandlerMux) GET(location string , acFunc ActionFunc) {
-	spdController := mux.SpeedyController
-	spdController.routers = append(spdController.routers, RouteEntry{
-		Method: http.MethodGet, Location: location, Action:"SpeedyGetAction",
-	})
-	spdController.funcMapGet[location] = acFunc
-}
-
-func (mux *HandlerMux) POST(location string , acFunc ActionFunc) {
-	spdController := mux.SpeedyController
-	spdController.routers = append(spdController.routers, RouteEntry{
-		Method: http.MethodPost, Location: location, Action:"SpeedyPostAction",
-	})
-	spdController.funcMapPost[location] = acFunc
-}
-
-func (mux *HandlerMux) PUT(location string , acFunc ActionFunc) {
-	spdController := mux.SpeedyController
-	spdController.routers = append(spdController.routers, RouteEntry{
-		Method: http.MethodPut, Location: location, Action:"SpeedyPutAction",
-	})
-	spdController.funcMapPut[location] = acFunc
-}
-
-func (mux *HandlerMux) DELETE(location string , acFunc ActionFunc) {
-	spdController := mux.SpeedyController
-	spdController.routers = append(spdController.routers, RouteEntry{
-		Method: http.MethodDelete, Location: location, Action:"SpeedyDeleteAction",
-	})
-	spdController.funcMapDelete[location] = acFunc
-}

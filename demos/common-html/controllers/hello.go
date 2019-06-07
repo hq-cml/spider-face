@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"github.com/hq-cml/spider-face/core"
-	"net/http"
 	"time"
 )
 
@@ -22,12 +21,12 @@ func (hello *HelloController) GetRoundTrip() core.Roundtrip {
 //创建一个controller，并绑定路由
 func NewHelloAction() *HelloController{
 	hc := &HelloController{}
-	hc.entries = []core.RouteEntry{
-		{Method: http.MethodGet, Location: "/index",     Action:"IndexAction",},
-		{Method: http.MethodGet, Location: "/index/:id", Action:"IndexAction",},
-	}
-
 	return hc
+}
+
+//设置路由规则
+func (hc *HelloController) SetRouteEntries(entries []core.RouteEntry) {
+	hc.entries = entries
 }
 
 //浏览器 'http://192.168.110.133:9529/index/aaa'

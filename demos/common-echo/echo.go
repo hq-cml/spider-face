@@ -12,6 +12,7 @@ import (
 	"github.com/hq-cml/spider-face/core"
 	"github.com/hq-cml/spider-face"
 	"github.com/hq-cml/spider-face/demos/common-echo/controllers"
+	"net/http"
 )
 
 func main() {
@@ -23,6 +24,14 @@ func main() {
 	}
 
 	hc := controllers.NewHelloAction()                  //创建需要持有的controller，并绑定路由
+	hc.SetRouteEntries([]core.RouteEntry{
+		{Method: http.MethodGet,  Location: "/index",		 Action:"IndexAction",},    //能接收普通参数
+		{Method: http.MethodGet,  Location: "/index/:id", 	 Action:"IndexAction",},    //能接收普通参数和路径参数
+		{Method: http.MethodPost, Location: "/index/post",   Action:"PostAction",},     //能接收Post参数
+		{Method: http.MethodGet,  Location: "/index/" + core.PATH_INFO_IDENTITY,
+			Action:"IndexAction",},                                                     //能接收普通参数和pathinfo参数
+		{Method: http.MethodGet,  Location: "/json",         Action:"JsonAction",},     //输出Json
+	})
 
 	if err = spd.RegisterController([]core.Controller{  //注册controller
 		hc,
