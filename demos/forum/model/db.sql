@@ -21,7 +21,7 @@ create table sessions (
   created_at timestamp not null   
 );
 
-create table threads (
+create table issues (
   id         serial primary key,
   uuid       varchar(64) not null unique,
   topic      text,
@@ -29,11 +29,11 @@ create table threads (
   created_at timestamp not null       
 );
 
-create table posts (
+create table replies (
   id         serial primary key,
   uuid       varchar(64) not null unique,
   body       text,
   user_id    integer references users(id),
-  thread_id  integer references threads(id),
+  issue_id   integer references replies(id),
   created_at timestamp not null  
 );

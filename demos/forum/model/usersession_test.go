@@ -24,6 +24,8 @@ var users = []User{
 func setup() {
 	SessionDeleteAll()
 	UserDeleteAll()
+	IssuesDeleteAll()
+	RepliesDeleteAll()
 }
 
 func Test_UserCreate(t *testing.T) {

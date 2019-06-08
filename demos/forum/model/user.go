@@ -126,3 +126,44 @@ func GetUserById(id string) (user User, err error) {
 		Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, &user.CreatedAt)
 	return
 }
+
+// Create a new Issue
+func (user *User) CreateIssue(topic string) (conv Issue, err error) {
+	statement := "insert into issues (uuid, topic, user_id, created_at) values (?, ?, ?, ?)"
+	stmt, err := Db.Prepare(statement)
+	if err != nil {
+		return
+	}
+	defer stmt.Close()
+
+	ret, err := stmt.Exec(createUUID(), topic, user.Id, time.Now())
+	if err != nil {
+		return
+	}
+	id, _ := ret.LastInsertId()
+
+	conv = Issue{}
+	err = Db.QueryRow("SELECT id, uuid, topic, user_id, created_at FROM issues WHERE id = ?", id).
+		Scan(&conv.Id, &conv.Uuid, &conv.Topic, &conv.UserId, &conv.CreatedAt)
+	return
+}
+
+// Create a new reply for a issue
+func (user *User) CreateReply(conv Issue, body string) (reply Reply, err error) {
+	statement := "insert into replies (uuid, body, user_id, thread_id, created_at) values (?, ?, ?, ?, ?)"
+	stmt, err := Db.Prepare(statement)
+	if err != nil {
+		return
+	}
+	defer stmt.Close()
+	ret, err := stmt.Exec(createUUID(), body, user.Id, conv.Id, time.Now())
+	if err != nil {
+		return
+	}
+	id, _ := ret.LastInsertId()
+
+	reply = Reply{}
+	err = Db.QueryRow("SELECT id, uuid, body, user_id, thread_id, created_at FROM replies where id = ?", id).
+		Scan(&reply.Id, &reply.Uuid, &reply.Body, &reply.UserId, &reply.ThreadId, &reply.CreatedAt)
+	return
+}
