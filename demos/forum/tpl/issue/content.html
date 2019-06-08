@@ -1,6 +1,6 @@
 {{ define "issue/content" }}
 <p class="lead">
-  <a href="/thread/new">Start a thread</a> or join one below!
+  <a href="/issue/new">Start a issue</a> or join one below!
 </p>
 
 {{ range .issues }}
@@ -11,7 +11,7 @@
     <div class="panel-body">
       Started by {{ .User.Name }} - {{ .CreatedAtDate }} - {{ .NumReplies }} posts.
       <div class="pull-right">
-        <a href="/thread/read?id={{.Uuid }}">Read more</a>
+        <a href="/issue/read?id={{.Uuid }}">Read more</a>
       </div>
     </div>
   </div>

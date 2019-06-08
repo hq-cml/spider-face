@@ -16,8 +16,10 @@ func main() {
 	//创建issue controller，并绑定路由
 	ic := controllers.NewIssueAction()
 	ic.SetRouteEntries([]core.RouteEntry{
-		{Method: http.MethodGet, Location: "/",      Action:"IndexAction",},
-		{Method: http.MethodGet, Location: "/index", Action:"IndexAction",},
+		{Method: http.MethodGet, Location: "/",      		 Action:"IndexAction",},
+		{Method: http.MethodGet, Location: "/index", 		 Action:"IndexAction",},
+		{Method: http.MethodGet, Location: "/issue/new", 	 Action:"NewIssueAction",},
+		{Method: http.MethodPost, Location: "/issue/create", Action:"CreateIssueAction",},
 	})
 
 	//创建user controller，并绑定路由

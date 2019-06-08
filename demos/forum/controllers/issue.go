@@ -51,3 +51,39 @@ func (ic *IssueController) IndexAction(rp core.Roundtrip) {
 	rp.Assign("issues", issues)
 	rp.Display("issue/index")
 }
+
+func (ic *IssueController) NewIssueAction(rp core.Roundtrip) {
+	//校验session判断是否登陆
+	_, err := session(rp)
+	if err != nil {
+		rp.Redirect("/login")
+	} else {
+		rp.Display("issue/new")
+	}
+}
+
+func (ic *IssueController) CreateIssueAction(rp core.Roundtrip) {
+	//校验session判断是否登陆
+	sess, err := session(rp)
+	if err != nil {
+		rp.Redirect("/login")
+		return
+	}
+
+	user, err := sess.User()
+	if err != nil {
+		msg := fmt.Sprintf("Can't got user... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	topic := rp.Param("topic")
+	_, err = user.CreateIssue(topic)
+	if err != nil {
+		msg := fmt.Sprintf("Can't got user... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	rp.Redirect("/index")
+}
