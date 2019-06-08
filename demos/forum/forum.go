@@ -23,6 +23,8 @@ func main() {
 	//创建user controller，并绑定路由
 
 
+	//快捷注册一个通用的错误页面
+	spd.GET("/err", controllers.Err)
 
 	if err := spd.RegisterController([]core.Controller{  //注册controller
 		ic,

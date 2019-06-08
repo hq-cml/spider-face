@@ -4,6 +4,7 @@ import (
 	"github.com/hq-cml/spider-face/core"
 
 	"github.com/hq-cml/spider-face/demos/forum/model"
+	"fmt"
 )
 
 //创建标准的Controller，必须以Controller后缀结尾
@@ -34,7 +35,9 @@ func (ic *IssueController) SetRouteEntries(entries []core.RouteEntry) {
 func (ic *IssueController) IndexAction(rp core.Roundtrip) {
 	issues, err := model.GetAllIssues()
 	if err != nil {
-		rp.Echo("Error: " + err.Error())
+		msg := fmt.Sprintf("Can't got any issues... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
 	}
 
 	//校验session判断是否登陆

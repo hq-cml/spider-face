@@ -1,0 +1,21 @@
+{{ define "public/error" }}
+<!DOCTYPE html>
+<html lang="en">
+{{ template "public/head" . }}
+
+<body>
+{{if .login}}
+    {{ template "public/private.navbar" . }}
+    {{else}}
+    {{ template "public/public.navbar" . }}
+    {{end}}
+
+<div class="container">
+
+    <p class="lead">{{ .Msg }}</p>
+
+</div> <!-- /container -->
+</body>
+</html>
+
+{{ end }}
