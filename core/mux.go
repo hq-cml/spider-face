@@ -94,6 +94,7 @@ func (mux *HandlerMux) RegisterController(controllers []Controller) error {
 			mux.logger.Errf("RegController error :%v", err)
 			return err
 		}
+		mux.logger.Infof("Register Controller : %v", typ.Name())
 	}
 
 	return nil

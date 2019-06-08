@@ -31,7 +31,7 @@ type Roundtrip interface {
 	GET() map[string]string
 	POST() map[string]interface{}
 	ReqBody() []byte
-	Redirect(url string)
+	Redirect(url string, code ...int)
 	GetUploadFiles(key string) ([]*multipart.FileHeader, error)
 	MoveUploadFile(fromfile, tofile string) error
 	GetFileSize(file *multipart.File) int64
@@ -181,8 +181,12 @@ func (rp *SpiderRoundtrip) ReqBody() []byte {
 }
 
 //跳转
-func (rp *SpiderRoundtrip) Redirect(url string) {
-	http.Redirect(rp.response.Writer, rp.request.request, url, 301)
+func (rp *SpiderRoundtrip) Redirect(url string, code ...int) {
+	if len(code) > 0 {
+		http.Redirect(rp.response.Writer, rp.request.request, url, code[0])
+	} else {
+		http.Redirect(rp.response.Writer, rp.request.request, url, 302)
+	}
 }
 
 //TODO

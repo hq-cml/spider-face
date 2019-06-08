@@ -21,13 +21,21 @@ func main() {
 	})
 
 	//创建user controller，并绑定路由
-
+	uc := controllers.NewUserAction()
+	uc.SetRouteEntries([]core.RouteEntry{
+		{Method: http.MethodGet,  Location: "/login",  		   Action:"LoginAction",},
+		{Method: http.MethodGet,  Location: "/logout", 		   Action:"LogoutAction",},
+		{Method: http.MethodGet,  Location: "/signup", 		   Action:"SignupAction",},
+		{Method: http.MethodPost, Location: "/signup_account", Action:"SignupAccountAction",},
+		{Method: http.MethodPost, Location: "/authenticate",   Action:"AuthenticateAction",},
+	})
 
 	//快捷注册一个通用的错误页面
 	spd.GET("/err", controllers.Err)
 
-	if err := spd.RegisterController([]core.Controller{  //注册controller
-		ic,
+	//注册controller
+	if err := spd.RegisterController([]core.Controller{
+		ic, uc,
 	}); err != nil {
 		fmt.Println(err)
 		return
