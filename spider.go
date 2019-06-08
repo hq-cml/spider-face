@@ -93,9 +93,9 @@ func NewSpider(sConfig *core.SpiderConfig, logger core.SpiderLogger) (*Spider) {
 	}
 
 	//初始化解析视图模板文件
+	spd.logger.Debugf("TplPath: %v", sConfig.TplPath)
 	core.InitViewTemplate(spd.Config.TplPath, spd.logger)
 
-	spd.logger.Debugf("TplPath: %v", sConfig.TplPath)
 	spd.logger.Debugf("StaticPath: %v", sConfig.StaticPath)
 	spd.logger.Info("Spider init success!")
 	return spd

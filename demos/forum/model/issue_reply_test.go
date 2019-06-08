@@ -31,7 +31,7 @@ func Test_CreateIssue(t *testing.T) {
 		t.Errorf("User not created. %v", err)
 	}
 
-	conv, err := u.CreateIssue("My first issue")
+	conv, err := u.CreateIssue("My first issue.")
 	if err != nil {
 		t.Error(err, "Cannot create thread")
 	}

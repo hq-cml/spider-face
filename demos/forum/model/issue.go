@@ -53,7 +53,7 @@ func (issue *Issue) Replies() (replies []Reply, err error) {
 }
 
 // Get all threads in the database and returns it
-func Issues() (issues []Issue, err error) {
+func GetAllIssues() (issues []Issue, err error) {
 	rows, err := Db.Query("SELECT id, uuid, topic, user_id, created_at FROM issues ORDER BY created_at DESC")
 	if err != nil {
 		return

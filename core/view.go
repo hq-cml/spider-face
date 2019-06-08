@@ -15,7 +15,7 @@ import (
 
 var (
 	ViewPathRoot  string
-	ViewExt       string = ".html"
+	ViewExt       = ".html"
 	ViewTemplates map[string]*template.Template
 	templateFiles map[string]string
 	viewFunc      template.FuncMap             //map[string]interface{}
@@ -58,7 +58,7 @@ func (vi *View) Render(viewName string) ([]byte, error) {
 		htmlContentBytes := bytes.NewBufferString("")
 		err := tpl.ExecuteTemplate(htmlContentBytes, viewName, vi.data)
 		if err != nil {
-			vi.logger.Errf("ExecuteTemplate Error:%v", err)
+			vi.logger.Errf("ExecuteTemplate Error:%v. ViewName:%v", err, viewName)
 			return []byte(""), err
 		}
 		content, err := ioutil.ReadAll(htmlContentBytes)
@@ -84,6 +84,7 @@ func InitViewTemplate(viewRoot string, logger SpiderLogger) {
 	ViewPathRoot = viewRoot
 	templateFiles = make(map[string]string)
 
+	//首先分析找出tpl目录下面所有的复合条件的模板文件
 	filepath.Walk(viewRoot, func(path string, f os.FileInfo, err error) error {
 		//忽略目录名和软链
 		if f.IsDir() || (f.Mode()&os.ModeSymlink) > 0 {
@@ -100,7 +101,8 @@ func InitViewTemplate(viewRoot string, logger SpiderLogger) {
 		return nil
 	})
 
-	//fmt.Println("templateFiles: ", helper.JsonEncode(templateFiles))
+	//以每个模板文件为根，递归分析得到他们的子页面（如果包含的话）
+	//进而每个模板文件（及他们的子页面）都进行解析，得到http.Template句柄
 	ViewTemplates = make(map[string]*template.Template)
 	for name, filePath := range templateFiles {
 		if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {
@@ -111,20 +113,29 @@ func InitViewTemplate(viewRoot string, logger SpiderLogger) {
 		//注册自定义函数
 		tpl := template.New(name).Delims("{{", "}}").Funcs(viewFunc)
 
-		//解析模板
+		//递归分析模板文件，得到它以及他的子页面
 		subFiles := []string{}
 		err := findSubFiles(filePath, &subFiles)
 		if err != nil {
 			logger.Fatal("findSubFiles Error:", err)
 			panic(err)
 		}
+
+		//解析模板（和它的子页面），得到http.Template句柄
 		tpl, err = tpl.ParseFiles(subFiles...)
 		if err != nil {
 			logger.Fatal("ParseFiles Error:", err)
 			panic(err)
 		}
 		ViewTemplates[name] = tpl
-		logger.Infof("Load parse:%s=> %s", name, filePath)
+
+		//记录日志
+		tmp := []string{}
+		for _, f := range subFiles {
+			t := strings.Split(f, "/")
+			tmp = append(tmp, t[len(t) - 1])
+		}
+		logger.Infof("Load Parse Tpl: %s, Include: %v", name + ViewExt, tmp)
 	}
 
 	return
@@ -136,11 +147,13 @@ func findSubFiles(path string, files *[]string) error {
 		*files = append(*files, path)
 	}
 
+	//读取文件内容
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
+	//利用正则找到嵌套子页面
 	reg := regexp.MustCompile(`{{\s{0,}template\s{0,}"(.*?)".*?}}`)
 	matches := reg.FindAllStringSubmatch(string(data), -1)
 	for _, v := range matches {
@@ -153,6 +166,7 @@ func findSubFiles(path string, files *[]string) error {
 			*files = append(*files, subFile)
 		}
 
+		//递归下去
 		err = findSubFiles(subFile, files)
 		if err != nil {
 			return err

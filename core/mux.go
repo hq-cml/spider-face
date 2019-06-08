@@ -114,10 +114,10 @@ func (mux *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//收尾日志
 	endTime := time.Now()
 	costDuration := float64(endTime.UnixNano() - startTime.UnixNano()) / 1000000 //毫秒
-	format := "AccessLog: Method=[%s]; Uri=[%s]; ClientIp=[%s]; StartTime=[%s]; CostTime=[%f] ms; Status=[%s]; User-Agent=[%s]" //ip - [time] Method uri scheme status request_time agent
+	format := "AccessLog: Method=[%s]; Uri=[%s]; ClientIp=[%s]; StartTime=[%s]; CostTime=[%f] ms; Status=[%s]"
 	mux.logger.Infof(format, r.Method, r.URL.RequestURI(),
 		r.RemoteAddr, Date("Y-m-d H:i:s", startTime), costDuration,
-		w.Header().Get("Status"), r.Header.Get("User-Agent"))
+		w.Header().Get("Status")/*, r.Header.Get("User-Agent")*/)
 }
 
 func (mux *HandlerMux) DispatchHandler(w http.ResponseWriter, r *http.Request) {

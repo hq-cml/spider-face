@@ -19,7 +19,7 @@ func (hc *HelloController) GetRoundTrip() core.Roundtrip {
 	return &hc.spdrp
 }
 
-//创建一个controller，并绑定路由
+//创建一个controller
 func NewHelloAction() *HelloController{
 	hc := &HelloController{}
 	return hc
