@@ -5,6 +5,7 @@ import (
 
 	"github.com/hq-cml/spider-face/demos/forum/model"
 	"fmt"
+	"github.com/hq-cml/spider-face/utils/helper"
 )
 
 //创建标准的Controller，必须以Controller后缀结尾
@@ -86,4 +87,27 @@ func (ic *IssueController) CreateIssueAction(rp core.Roundtrip) {
 	}
 
 	rp.Redirect("/index")
+}
+
+func (ic *IssueController) ReadIssueAction(rp core.Roundtrip) {
+	uuid := rp.Param("id")
+	issue, err := model.GetIssueByUUID(uuid)
+	if err != nil {
+		msg := fmt.Sprintf("Can't got issur... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	//校验session判断是否登陆
+	_, err = session(rp)
+	if err != nil {
+		rp.Assign("login", false)
+	} else {
+		rp.Assign("login", true)
+	}
+
+	rp.Assign("issue", &issue)
+	issue.Replies()
+	fmt.Println("A-------------------", helper.JsonEncode(issue.Replies()))
+	rp.Display("issue/detail")
 }

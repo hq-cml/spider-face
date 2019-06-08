@@ -1,20 +1,20 @@
 {{ define "issue/content" }}
-<p class="lead">
-  <a href="/issue/new">Start a issue</a> or join one below!
-</p>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <span class="lead"> <i class="fa fa-comment-o"></i> {{ .issue.Topic }}</span>
+            <div class="pull-right">
+                Started by {{ .issue.User.Name }} - {{ .issue.CreatedAtDate }}
+            </div>
+        </div>
 
-{{ range .issues }}
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <span class="lead"> <i class="fa fa-comment-o"></i> {{ .Topic }}</span>
-    </div>
-    <div class="panel-body">
-      Started by {{ .User.Name }} - {{ .CreatedAtDate }} - {{ .NumReplies }} posts.
-      <div class="pull-right">
-        <a href="/issue/read?id={{.Uuid }}">Read more</a>
-      </div>
-    </div>
-  </div>
-{{ end }}
+    {{/*{{ range .issue.Replies }}*/}}
+        {{/*<div class="panel-body">*/}}
+            {{/*<span class="lead"> <i class="fa fa-comment"></i> {{ .Body }}</span>*/}}
+            {{/*<div class="pull-right">*/}}
+            {{/*{{ .User.Name }} - {{ .CreatedAtDate }}*/}}
+            {{/*</div>*/}}
+        {{/*</div>*/}}
+    {{/*{{ end }}*/}}
 
+    </div>
 {{ end }}
