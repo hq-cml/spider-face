@@ -132,10 +132,10 @@ func InitViewTemplate(viewRoot string, logger SpiderLogger) {
 		//记录日志
 		tmp := []string{}
 		for _, f := range subFiles {
-			t := strings.Split(f, "/")
-			tmp = append(tmp, t[len(t) - 1])
+			//t := strings.Split(f, "/")
+			tmp = append(tmp, strings.TrimPrefix(f, viewRoot))
 		}
-		logger.Infof("Load Parse Tpl: %s, Include: %v", name + ViewExt, tmp)
+		logger.Infof("Load Parse Tpl: %s %v", name + ViewExt, tmp)
 	}
 
 	return

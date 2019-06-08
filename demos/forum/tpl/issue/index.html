@@ -11,7 +11,11 @@
     <link href="/css/font-awesome.min.css" rel="stylesheet">
   </head>
   <body>
+    {{if .login}}
+    {{ template "navigate/private.navbar" . }}
+    {{else}}
     {{ template "navigate/public.navbar" . }}
+    {{end}}
 
     <div class="container">
       

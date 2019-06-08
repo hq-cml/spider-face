@@ -37,6 +37,14 @@ func (ic *IssueController) IndexAction(rp core.Roundtrip) {
 		rp.Echo("Error: " + err.Error())
 	}
 
+	//校验session判断是否登陆
+	_, err = session(rp)
+	if err != nil {
+		rp.Assign("login", false)
+	} else {
+		rp.Assign("login", true)
+	}
+
 	rp.Assign("issues", issues)
 	rp.Display("issue/index")
 }
