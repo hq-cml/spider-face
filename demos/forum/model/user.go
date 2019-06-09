@@ -150,7 +150,7 @@ func (user *User) CreateIssue(topic string) (conv Issue, err error) {
 
 // Create a new reply for a issue
 func (user *User) CreateReply(conv Issue, body string) (reply Reply, err error) {
-	statement := "insert into replies (uuid, body, user_id, thread_id, created_at) values (?, ?, ?, ?, ?)"
+	statement := "insert into replies (uuid, body, user_id, issue_id, created_at) values (?, ?, ?, ?, ?)"
 	stmt, err := Db.Prepare(statement)
 	if err != nil {
 		return
@@ -163,7 +163,7 @@ func (user *User) CreateReply(conv Issue, body string) (reply Reply, err error) 
 	id, _ := ret.LastInsertId()
 
 	reply = Reply{}
-	err = Db.QueryRow("SELECT id, uuid, body, user_id, thread_id, created_at FROM replies where id = ?", id).
-		Scan(&reply.Id, &reply.Uuid, &reply.Body, &reply.UserId, &reply.ThreadId, &reply.CreatedAt)
+	err = Db.QueryRow("SELECT id, uuid, body, user_id, issue_id, created_at FROM replies where id = ?", id).
+		Scan(&reply.Id, &reply.Uuid, &reply.Body, &reply.UserId, &reply.IssueId, &reply.CreatedAt)
 	return
 }

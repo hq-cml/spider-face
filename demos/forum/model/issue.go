@@ -37,13 +37,13 @@ func (issue *Issue) NumReplies() (count int) {
 
 // get posts to a thread
 func (issue *Issue) Replies() (replies []Reply, err error) {
-	rows, err := Db.Query("SELECT id, uuid, body, user_id, thread_id, created_at FROM posts where thread_id = ?", issue.Id)
+	rows, err := Db.Query("SELECT id, uuid, body, user_id, issue_id, created_at FROM posts where thread_id = ?", issue.Id)
 	if err != nil {
 		return
 	}
 	for rows.Next() {
 		reply := Reply{}
-		if err = rows.Scan(&reply.Id, &reply.Uuid, &reply.Body, &reply.UserId, &reply.ThreadId, &reply.CreatedAt); err != nil {
+		if err = rows.Scan(&reply.Id, &reply.Uuid, &reply.Body, &reply.UserId, &reply.IssueId, &reply.CreatedAt); err != nil {
 			return
 		}
 		replies = append(replies, reply)

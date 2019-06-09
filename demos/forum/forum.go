@@ -21,6 +21,7 @@ func main() {
 		{Method: http.MethodGet,  Location: "/issue/new", 	 Action:"NewIssueAction",},
 		{Method: http.MethodPost, Location: "/issue/create", Action:"CreateIssueAction",},
 		{Method: http.MethodGet,  Location: "/issue/read",   Action:"ReadIssueAction",},
+		{Method: http.MethodPost, Location: "/issue/reply",  Action:"ReplyIssueAction",},
 	})
 
 	//创建user controller，并绑定路由

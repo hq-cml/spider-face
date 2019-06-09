@@ -5,7 +5,6 @@ import (
 
 	"github.com/hq-cml/spider-face/demos/forum/model"
 	"fmt"
-	"github.com/hq-cml/spider-face/utils/helper"
 )
 
 //创建标准的Controller，必须以Controller后缀结尾
@@ -93,7 +92,7 @@ func (ic *IssueController) ReadIssueAction(rp core.Roundtrip) {
 	uuid := rp.Param("id")
 	issue, err := model.GetIssueByUUID(uuid)
 	if err != nil {
-		msg := fmt.Sprintf("Can't got issur... %v", err)
+		msg := fmt.Sprintf("Can't got issue... %v", err)
 		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
 		return
 	}
@@ -107,7 +106,42 @@ func (ic *IssueController) ReadIssueAction(rp core.Roundtrip) {
 	}
 
 	rp.Assign("issue", &issue)
-	issue.Replies()
-	fmt.Println("A-------------------", helper.JsonEncode(issue.Replies()))
+	//issue.Replies()
+	//fmt.Println("A-------------------", helper.JsonEncode(issue.Replies()))
 	rp.Display("issue/detail")
+}
+
+func (ic *IssueController) ReplyIssueAction(rp core.Roundtrip) {
+	sess, err := session(rp)
+	if err != nil {
+		rp.Redirect("/login")
+		return
+	}
+
+	user, err := sess.User()
+	if err != nil {
+		msg := fmt.Sprintf("Can't got user... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	uuid := rp.Param("uuid")
+	body := rp.Param("body")
+
+	issue, err := model.GetIssueByUUID(uuid)
+	if err != nil {
+		msg := fmt.Sprintf("Can't got issue... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	_, err = user.CreateReply(issue, body)
+	if err != nil {
+		msg := fmt.Sprintf("Can't CreateReply... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+
+	rp.Redirect(fmt.Sprintf("/issue/read?id=%v", uuid))
 }

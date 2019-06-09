@@ -6,15 +6,18 @@
 
   <body>
     {{if .login}}
-    {{ template "public/private.navbar" . }}
+      {{ template "public/private.navbar" . }}
     {{else}}
-    {{ template "public/public.navbar" . }}
+      {{ template "public/public.navbar" . }}
     {{end}}
 
     <div class="container">
       
       {{ template "issue/content" . }}
-      
+
+      {{if .login}}
+        {{ template "issue/reply" . }}
+      {{end}}
     </div> <!-- /container -->
   </body>
 </html>

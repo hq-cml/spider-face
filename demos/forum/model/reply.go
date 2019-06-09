@@ -10,7 +10,7 @@ type Reply struct {
 	Uuid      string
 	Body      string
 	UserId    int
-	ThreadId  int
+	IssueId   int
 	CreatedAt time.Time
 }
 

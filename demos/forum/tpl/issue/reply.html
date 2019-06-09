@@ -1,0 +1,14 @@
+{{ define "issue/reply" }}
+    <div class="panel panel-info">
+        <div class="panel-body">
+            <form role="form" action="/issue/reply" method="post">
+                <div class="form-group">
+                    <textarea class="form-control" name="body" id="body" placeholder="Write your reply here" rows="3"></textarea>
+                    <input type="hidden" name="uuid" value="{{ .issue.Uuid }}">
+                    <br/>
+                    <button class="btn btn-primary pull-right" type="submit">Reply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{{ end }}
