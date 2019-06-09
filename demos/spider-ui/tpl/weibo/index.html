@@ -1,0 +1,30 @@
+{{ define "weibo/index" }}
+
+<!DOCTYPE html>
+<html lang="en">
+
+{{ template "public/head" . }}
+
+<body>
+<div class="container">
+
+    <form class="form-signin center" role="form" action="/_search" method="post">
+        <h2 class="form-signin-heading">
+            <i class="fa fa-comments-o">
+                SpiderEngine
+            </i>
+        </h2>
+        <br/>
+        <br/>
+        <input type="email" name="keyword" class="form-control" placeholder="Key Word" required autofocus>
+        <br/>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" style="align-self: center; width: 50%" >搜一下~</button>
+
+    </form>
+
+</div> <!-- /container -->
+
+</body>
+</html>
+
+{{ end }}

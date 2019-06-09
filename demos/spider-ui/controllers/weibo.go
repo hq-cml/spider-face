@@ -30,5 +30,5 @@ func (ic *WeiboController) SetRouteEntries(entries []core.RouteEntry) {
 
 //首页展示
 func (ic *WeiboController) IndexAction(rp core.Roundtrip) {
-	rp.Display("issue/index")
+	rp.Display("weibo/index")
 }

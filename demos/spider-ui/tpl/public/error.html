@@ -1,0 +1,17 @@
+{{ define "public/error" }}
+<!DOCTYPE html>
+<html lang="en">
+{{ template "public/head" . }}
+
+<body>
+    {{ template "public/navbar" . }}
+
+    <div class="container">
+
+    <p class="lead">{{ .Msg }}</p>
+
+</div> <!-- /container -->
+</body>
+</html>
+
+{{ end }}
