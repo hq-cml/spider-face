@@ -13,7 +13,7 @@ var Db *sql.DB
 
 func init() {
 	var err error
-	Db, err = sql.Open("mysql", "root:123456@tcp(127.0.0.1:3306)/chitchat?charset=utf8&parseTime=true")
+	Db, err = sql.Open("mysql", "root:123456@tcp(127.0.0.1:3306)/chitchat?charset=utf8&parseTime=true&loc=Local")
 	if err != nil {
 		log.Fatal(err)
 	}

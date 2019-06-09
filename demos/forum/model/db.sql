@@ -11,7 +11,7 @@ create table users (
   email      varchar(255) not null unique,
   password   varchar(255) not null,
   created_at timestamp not null   
-);
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
 create table sessions (
   id         serial primary key,
@@ -19,7 +19,7 @@ create table sessions (
   email      varchar(255),
   user_id    integer references users(id),
   created_at timestamp not null   
-);
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
 create table issues (
   id         serial primary key,
@@ -27,7 +27,7 @@ create table issues (
   topic      text,
   user_id    integer references users(id),
   created_at timestamp not null       
-);
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
 create table replies (
   id         serial primary key,
@@ -36,4 +36,4 @@ create table replies (
   user_id    integer references users(id),
   issue_id   integer references replies(id),
   created_at timestamp not null  
-);
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;

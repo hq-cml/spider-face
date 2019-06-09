@@ -3,7 +3,7 @@
         <div class="panel-heading">
             <span class="lead"> <i class="fa fa-comment-o"></i> {{ .issue.Topic }}</span>
             <div class="pull-right">
-                Started by {{ .issue.User.Name }} - {{ .issue.CreatedAtDate }}
+                Started by {{ .issue.User.Name }} - {{ date "Y-m-d H:i:s" .issue.CreatedAt }}
             </div>
         </div>
 
@@ -11,7 +11,7 @@
         <div class="panel-body">
             <span class="lead"> <i class="fa fa-comment"></i> {{ .Body }}</span>
             <div class="pull-right">
-            {{ .User.Name }} - {{ .CreatedAtDate }}
+            {{ .User.Name }} - {{ date "Y-m-d H:i:s" .CreatedAt }}
             </div>
         </div>
     {{ end }}
