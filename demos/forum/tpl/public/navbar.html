@@ -1,4 +1,4 @@
-{{ define "public/private.navbar" }}
+{{ define "public/navbar" }}
 <div class="navbar navbar-default navbar-static-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
@@ -18,7 +18,11 @@
         <li><a href="/">Home</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
+      {{if .login}}
         <li><a href="/logout">Logout</a></li>
+      {{ else }}
+         <li><a href="/login">Login</a></li>
+      {{ end }}
       </ul>
     </div>
   </div>

@@ -5,11 +5,7 @@
   {{ template "public/head" . }}
 
   <body>
-    {{if .login}}
-    {{ template "public/private.navbar" . }}
-    {{else}}
-    {{ template "public/public.navbar" . }}
-    {{end}}
+    {{ template "public/navbar" . }}
 
     <div class="container">
       

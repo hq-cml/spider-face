@@ -10,7 +10,7 @@ import (
 
 func main() {
 	spd := spider.NewSpider(&core.SpiderConfig{         //生成Spider实例
-		BindAddr: ":9529",    						    //监听地址:端口
+		BindAddr: ":9530",    						    //监听地址:端口
 	}, nil)
 
 	//创建issue controller，并绑定路由
