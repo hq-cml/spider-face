@@ -37,7 +37,7 @@ func (issue *Issue) NumReplies() (count int) {
 
 // get posts to a thread
 func (issue *Issue) Replies() (replies []Reply, err error) {
-	rows, err := Db.Query("SELECT id, uuid, body, user_id, issue_id, created_at FROM posts where thread_id = ?", issue.Id)
+	rows, err := Db.Query("SELECT id, uuid, body, user_id, issue_id, created_at FROM replies where issue_id = ?", issue.Id)
 	if err != nil {
 		return
 	}

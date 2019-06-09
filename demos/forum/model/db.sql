@@ -1,5 +1,5 @@
-drop table posts;
-drop table threads;
+drop table issues;
+drop table replies;
 drop table sessions;
 drop table users;
 

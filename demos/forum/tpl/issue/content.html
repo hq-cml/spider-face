@@ -7,14 +7,14 @@
             </div>
         </div>
 
-    {{/*{{ range .issue.Replies }}*/}}
-        {{/*<div class="panel-body">*/}}
-            {{/*<span class="lead"> <i class="fa fa-comment"></i> {{ .Body }}</span>*/}}
-            {{/*<div class="pull-right">*/}}
-            {{/*{{ .User.Name }} - {{ .CreatedAtDate }}*/}}
-            {{/*</div>*/}}
-        {{/*</div>*/}}
-    {{/*{{ end }}*/}}
+    {{ range .issue.Replies }}
+        <div class="panel-body">
+            <span class="lead"> <i class="fa fa-comment"></i> {{ .Body }}</span>
+            <div class="pull-right">
+            {{ .User.Name }} - {{ .CreatedAtDate }}
+            </div>
+        </div>
+    {{ end }}
 
     </div>
 {{ end }}
