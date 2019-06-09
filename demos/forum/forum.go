@@ -14,7 +14,7 @@ func main() {
 	}, nil)
 
 	//创建issue controller，并绑定路由
-	ic := controllers.NewIssueAction()
+	ic := controllers.NewIssueController()
 	ic.SetRouteEntries([]core.RouteEntry{
 		{Method: http.MethodGet,  Location: "/",      		 Action:"IndexAction",},
 		{Method: http.MethodGet,  Location: "/index", 		 Action:"IndexAction",},
@@ -25,7 +25,7 @@ func main() {
 	})
 
 	//创建user controller，并绑定路由
-	uc := controllers.NewUserAction()
+	uc := controllers.NewUserController()
 	uc.SetRouteEntries([]core.RouteEntry{
 		{Method: http.MethodGet,  Location: "/login",  		   Action:"LoginAction",},
 		{Method: http.MethodGet,  Location: "/logout", 		   Action:"LogoutAction",},

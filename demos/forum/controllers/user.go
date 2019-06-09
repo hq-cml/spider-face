@@ -21,7 +21,7 @@ func (uc *UserController) GetRoundTrip() core.Roundtrip {
 }
 
 //创建一个controller
-func NewUserAction() *UserController{
+func NewUserController() *UserController{
 	uc := &UserController{}
 	return uc
 }

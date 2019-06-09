@@ -21,7 +21,7 @@ func (ic *IssueController) GetRoundTrip() core.Roundtrip {
 }
 
 //创建一个controller
-func NewIssueAction() *IssueController{
+func NewIssueController() *IssueController{
 	hc := &IssueController{}
 	return hc
 }
