@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"fmt"
 	"github.com/hq-cml/spider-face/utils/helper"
+	"encoding/json"
+	"time"
 )
 
 var SpiderEngineAddr string
@@ -68,5 +70,47 @@ func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-	rp.Echo(string(body))
+	r := Result{}
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		msg := fmt.Sprintf("Json decode Error... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	list := []Detail{}
+	for _, d := range r.Data {
+		if len([]rune(d.Detail.Content)) > 20 {
+			d.Detail.Summary = string([]rune(d.Detail.Content)[0: 20]) + "。。。"
+		} else {
+			d.Detail.Summary = d.Detail.Content
+		}
+		d.Detail.CreatedAt = time.Unix(d.Detail.Date, 0)
+		list = append(list, d.Detail)
+	}
+
+	rp.Assign("list", list)
+
+	rp.Display("weibo/list")
+}
+
+type Result struct {
+	Code int			`json:"code"`
+	Msg  string			`json:"msg"`
+	Data []DocInfo	    `json:"data"`
+}
+
+type DocInfo struct {
+	Key    string
+	Detail Detail
+}
+
+type Detail struct {
+	Date 		int64  `json:"date"`
+	ReadCnt 	int64  `json:"read_cnt"`
+	User 		string `json:"user_name"`
+	Content 	string `json:"weibo_content"`
+	Id 			string `json:"weibo_id"`
+	Summary     string
+	CreatedAt   time.Time
 }

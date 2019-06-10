@@ -19,7 +19,6 @@ func main() {
 		{Method: http.MethodGet,  Location: "/",      		 Action:"IndexAction",},
 		{Method: http.MethodGet,  Location: "/index", 		 Action:"IndexAction",},
 		{Method: http.MethodPost, Location: "/_search", 	 Action:"SearchAction",},
-		{Method: http.MethodGet,  Location: "/_list", 	     Action:"ListAction",},
 		{Method: http.MethodGet,  Location: "/_detail",      Action:"DetailAction",},
 	})
 
@@ -34,6 +33,9 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	//快捷注册一个通用的错误页面
+	spd.GET("/err", controllers.Err)
 
 	//Run
 	spd.Run()
