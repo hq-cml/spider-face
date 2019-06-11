@@ -114,3 +114,44 @@ type Detail struct {
 	Summary     string
 	CreatedAt   time.Time
 }
+
+//详情接口
+func (ic *WeiboController) DetailAction(rp core.Roundtrip) {
+	id := rp.Param("id")
+
+	//创建自定义的client进行搜索
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET",
+		fmt.Sprintf("http://%s/%s/%s/%s", SpiderEngineAddr, SpiderEngineDb, SpiderEngineTable, id), nil)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		msg := fmt.Sprintf("Search Error... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	r := DetailResult{}
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		msg := fmt.Sprintf("Json decode Error... %v", err)
+		rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+		return
+	}
+
+	r.Data.Detail.CreatedAt = time.Unix(r.Data.Detail.Date, 0)
+	rp.Assign("detail", r.Data.Detail)
+
+	rp.Display("weibo/detail")
+
+}
+
+type DetailResult struct {
+	Code int			`json:"code"`
+	Msg  string			`json:"msg"`
+	Data DocInfo	    `json:"data"`
+}

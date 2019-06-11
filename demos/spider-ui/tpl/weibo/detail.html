@@ -1,0 +1,18 @@
+{{ define "weibo/detail" }}
+
+<!DOCTYPE html>
+<html lang="en">
+  {{ template "public/head" . }}
+
+  <body>
+    {{ template "public/navbar" . }}
+
+    <div class="container">
+      
+      {{ template "weibo/content" . }}
+
+    </div> <!-- /container -->
+  </body>
+</html>
+
+{{ end }}
