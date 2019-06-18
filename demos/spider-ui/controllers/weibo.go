@@ -79,7 +79,7 @@ func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
 	}
 
 	list := []Detail{}
-	for _, d := range r.Data {
+	for _, d := range r.Data.Docs {
 		if len([]rune(d.Detail.Content)) > 20 {
 			d.Detail.Summary = string([]rune(d.Detail.Content)[0: 20]) + "。。。"
 		} else {
@@ -97,9 +97,12 @@ func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
 type Result struct {
 	Code int			`json:"code"`
 	Msg  string			`json:"msg"`
-	Data []DocInfo	    `json:"data"`
+	Data DocList	    `json:"data"`
 }
-
+type DocList struct {
+	Total int `json:"total"`
+	Docs  []DocInfo `json:"docs"`
+}
 type DocInfo struct {
 	Key    string
 	Detail Detail
