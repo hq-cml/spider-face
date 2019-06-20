@@ -70,6 +70,9 @@ func NewSpider(sConfig *core.SpiderConfig, logger core.SpiderLogger) (*Spider) {
 		sConfig.MaxHeaderByte = 1 << 20
 	}
 
+	//Mime初始化
+	core.InitMime()
+
 	//创建serverMux
 	mux := core.NewHandlerMux(sConfig, logger,
 		sConfig.CustomHttpErrorHtml, sConfig.CustomRewriteRule)
