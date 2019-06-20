@@ -7,6 +7,9 @@ import (
 	"mime"
 	"path"
 	"io/ioutil"
+	"compress/gzip"
+	"bytes"
+	"io"
 )
 
 //禁用默认的IE 和chrome错误页面显示
@@ -54,23 +57,59 @@ func OutputStaticFile(response *Response, request *Request, file string, customE
 		OutputErrorHtml(response, request, http.StatusForbidden, customErrHtml)
 		return
 	}
-	//file_size := fi.Size()
-	//mod_time := fi.ModTime()
 
-	//mime填充
-	if GlobalConf.Mime {
-		mimetype := mime.TypeByExtension(path.Ext(filePath))
-		if mimetype != "" {
-			response.SetHeader("Content-Type", mimetype)
+	fileSize := fi.Size()
+	modTime := fi.ModTime()
+	needGzip := CheckNeedGzip(fileSize, request, filePath)
+	if !needGzip {
+		//mime填充
+		if GlobalConf.Mime {
+			mimetype := mime.TypeByExtension(path.Ext(filePath))
+			if mimetype != "" {
+				response.SetHeader("Content-Type", mimetype)
+			}
+			b, _ := ioutil.ReadFile(filePath)
+			fmt.Fprintln(response.Writer, string(b)) //自己实现写, 因为ServeFile将会使Mime失效
+		} else {
+			http.ServeFile(response.Writer, request.request, filePath)
 		}
-		b, _ := ioutil.ReadFile(filePath)
-		fmt.Fprintln(response.Writer, string(b)) //自己实现写, 因为ServeFile将会使Mime失效
-	} else {
-		http.ServeFile(response.Writer, request.request, filePath)
+
+		return
 	}
 
+	//需要Gzip压缩
+	osfile, err := os.Open(filePath)
+	if err != nil {
+		OutputErrorHtml(response, request, http.StatusNotFound, customErrHtml)
+		return
+	}
+
+	var b bytes.Buffer
+
+	output_writer, err := gzip.NewWriterLevel(&b, gzip.BestCompression)
+	if err != nil {
+		OutputErrorHtml(response, request, http.StatusNotFound, customErrHtml)
+		return
+	}
+	_, err = io.Copy(output_writer, osfile)
+	output_writer.Close()
+
+	if err != nil {
+		OutputErrorHtml(response, request, http.StatusNotFound, customErrHtml)
+		return
+	}
+	content, err := ioutil.ReadAll(&b)
+	if err != nil {
+		OutputErrorHtml(response, request, http.StatusNotFound, customErrHtml)
+		return
+	}
+	cfi := &memFileInfo{fi, content}
+	mf := &memFile{cfi, 0}
+
+	response.SetHeader("Content-Encoding", "gzip")
+	http.ServeContent(response.Writer, request.request, filePath, modTime, mf)
+
 	return
-	//TODO 压缩
 }
 
 func OutputErrorHtml(response *Response, request *Request, httpCode int, customErrHtml map[int]string) {
@@ -95,6 +134,7 @@ func OutputErrorHtml(response *Response, request *Request, httpCode int, customE
 	//回写HTTP Body
 	fmt.Fprintln(response.Writer, ErrorPagesMap[httpCode] + disableIEAndChrome)
 }
+
 
 // Init mime type
 func InitMime() error {

@@ -14,7 +14,8 @@ type SpiderConfig struct {
 	CustomHttpErrorHtml map[int]string    //定制化的错误页面 httpCode => customErr.html
 	CustomRewriteRule   map[string]string
 
-	Mime                bool
+	Mime                bool    //配置Mime
+	Gzip                bool    //开启gzip压缩
 }
 
 type SpiderLogger interface {
