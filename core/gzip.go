@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 	"path"
+	"fmt"
 )
 
 const (
@@ -14,28 +15,41 @@ const (
 
 var (
 	GzipExt = map[string]bool {
-		".css": true,
-		".js": true,
+		".css":  true,
+		".js":   true,
 		".html": true,
+		".png":  true,
+		".jpg":  true,
 	}
 )
 
-func CheckNeedGzip(fileSize int64, request *Request, filePath string) bool {
-	flag := true
-	if GlobalConf.Gzip != true ||
-		fileSize < int64(CompressMinSize) ||
-		strings.Index(request.GetHeader("Accept-Encoding"), "gzip") < 0  {
-		flag = false
+func InitGzipExt(s string) {
+	if len(s) == 0 {
+		return
 	}
+	//split即便没有成功，也会返回一个长度为1的slice，作为整体。。。
+	t := strings.Split(s, "|")
+	GzipExt = map[string]bool{} //清空默认，以用户输入为准
+	for _, ext := range t {
+		GzipExt[strings.ToLower(ext)] = true
+	}
+}
 
-	ext := path.Ext(filePath)
-	_, exist := GzipExt[ext]
-
-	if flag && exist {
-		return true
-	} else {
+func CheckNeedGzip(fileSize int64, request *Request, filePath string) bool {
+	fmt.Println("C-------------", GzipExt)
+	if GlobalConf.Gzip != true ||
+		fileSize < int64(CompressMinSize) || //太小，没必要压缩
+		strings.Index(request.GetHeader("Accept-Encoding"), "gzip") < 0  {
 		return false
 	}
+
+	ext := strings.ToLower(path.Ext(filePath))
+	_, exist := GzipExt[ext]
+
+	if exist {
+		return true
+	}
+	return false
 }
 
 

@@ -18,6 +18,8 @@ import (
 func main() {
 	spd := spider.NewSpider(&core.SpiderConfig{         //生成Spider实例
 		BindAddr: ":9529",    						    //监听地址:端口
+		Gzip:true,                                      //静态文件压缩
+		//CustomGzipExt:"js|html",
 	}, nil)
 
 

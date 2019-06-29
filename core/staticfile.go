@@ -69,7 +69,7 @@ func OutputStaticFile(response *Response, request *Request, file string, customE
 				response.SetHeader("Content-Type", mimetype)
 			}
 			b, _ := ioutil.ReadFile(filePath)
-			fmt.Fprintln(response.Writer, string(b)) //自己实现写, 因为ServeFile将会使Mime失效
+			fmt.Fprintln(response.Writer, string(b)) //自己实现write, 因为ServeFile将会使Mime失效
 		} else {
 			http.ServeFile(response.Writer, request.request, filePath)
 		}
@@ -86,13 +86,13 @@ func OutputStaticFile(response *Response, request *Request, file string, customE
 
 	var b bytes.Buffer
 
-	output_writer, err := gzip.NewWriterLevel(&b, gzip.BestCompression)
+	outputWriter, err := gzip.NewWriterLevel(&b, gzip.BestCompression)
 	if err != nil {
 		OutputErrorHtml(response, request, http.StatusNotFound, customErrHtml)
 		return
 	}
-	_, err = io.Copy(output_writer, osfile)
-	output_writer.Close()
+	_, err = io.Copy(outputWriter, osfile)
+	outputWriter.Close()
 
 	if err != nil {
 		OutputErrorHtml(response, request, http.StatusNotFound, customErrHtml)

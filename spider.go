@@ -73,6 +73,9 @@ func NewSpider(sConfig *core.SpiderConfig, logger core.SpiderLogger) (*Spider) {
 	//Mime初始化
 	core.InitMime()
 
+	//用户自定义的压缩后缀列表初始化
+	core.InitGzipExt(sConfig.CustomGzipExt)
+
 	//创建serverMux
 	mux := core.NewHandlerMux(sConfig, logger,
 		sConfig.CustomHttpErrorHtml, sConfig.CustomRewriteRule)

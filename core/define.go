@@ -15,7 +15,8 @@ type SpiderConfig struct {
 	CustomRewriteRule   map[string]string
 
 	Mime                bool    //配置Mime
-	Gzip                bool    //开启gzip压缩
+	Gzip                bool    //开启gzip压缩，默认对：.css、.js、.html、.jpg、.png进行压缩
+	CustomGzipExt       string  //用户自己指定的压缩文件后缀，用|分隔
 }
 
 type SpiderLogger interface {
