@@ -18,7 +18,7 @@ func main() {
 	wc.SetRouteEntries([]core.RouteEntry{
 		{Method: http.MethodGet,  Location: "/",      		 Action:"IndexAction",},
 		{Method: http.MethodGet,  Location: "/index", 		 Action:"IndexAction",},
-		{Method: http.MethodPost, Location: "/_search", 	 Action:"SearchAction",},
+		{Method: http.MethodGet, Location: "/_search", 	 Action:"SearchAction",},
 		{Method: http.MethodGet,  Location: "/_detail",      Action:"DetailAction",},
 	})
 

@@ -6,7 +6,6 @@ import (
 	"io"
 	"strings"
 	"path"
-	"fmt"
 )
 
 const (
@@ -36,7 +35,6 @@ func InitGzipExt(s string) {
 }
 
 func CheckNeedGzip(fileSize int64, request *Request, filePath string) bool {
-	fmt.Println("C-------------", GzipExt)
 	if GlobalConf.Gzip != true ||
 		fileSize < int64(CompressMinSize) || //太小，没必要压缩
 		strings.Index(request.GetHeader("Accept-Encoding"), "gzip") < 0  {

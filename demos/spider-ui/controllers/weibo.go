@@ -9,6 +9,7 @@ import (
 	"github.com/hq-cml/spider-face/utils/helper"
 	"encoding/json"
 	"time"
+	"strconv"
 )
 
 var SpiderEngineAddr string
@@ -48,13 +49,27 @@ func (ic *WeiboController) IndexAction(rp core.Roundtrip) {
 //搜索接口
 func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
 	keyword := rp.Param("keyword")
+	p := rp.Param("page")
+	page := 1
+	size := 10
+	var err error
+	if p != "" {
+		page, err = strconv.Atoi(p)
+		if err != nil {
+			msg := fmt.Sprintf("Search Error... %v", err)
+			rp.Redirect(fmt.Sprintf("/err?msg=%s", msg))
+			return
+		}
+	}
 
 	//创建自定义的client进行搜索
 	client := &http.Client{}
-	query := map[string]string{
+	query := map[string]interface{}{
 		"database" : SpiderEngineDb,
 		"table" : SpiderEngineTable,
 		"value" : keyword,
+		"offset": size * (page-1),
+		"size": size,
 	}
 	req, _ := http.NewRequest("GET",
 		fmt.Sprintf("http://%s/_search", SpiderEngineAddr), strings.NewReader(helper.JsonEncode(query)))
