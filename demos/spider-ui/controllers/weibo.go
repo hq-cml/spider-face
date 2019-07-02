@@ -105,6 +105,8 @@ func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
 	}
 
 	rp.Assign("list", list)
+	rp.Assign("currentPage", page)
+	rp.Assign("totalPageCnt", int(r.Data.Total/size))
 
 	rp.Display("weibo/list")
 }

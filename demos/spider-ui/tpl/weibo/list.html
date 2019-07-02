@@ -6,12 +6,12 @@
   <script>
       $(function(){
           var options={
-              currentPage: 1,//当前的请求页面。
-              totalPages: 20,//一共多少页。
+              currentPage: $("#currentPage").text(),//当前的请求页面。
+              totalPages: $("#totalPageCnt").text(),//一共多少页。
               size:"normal",//应该是页眉的大小。
               bootstrapMajorVersion: 1,//bootstrap的版本要求。
               alignment:"right",
-              numberOfPages:5,//一页列出多少数据。
+              numberOfPages:10,//一页列出多少数据。
               itemTexts: function (type, page, current) {//如下的代码是将页眉显示的中文显示我们自定义的中文。
                   switch (type) {
                       case "first": return "首页";
@@ -31,6 +31,8 @@
   <body>
     {{ template "public/navbar" . }}
 
+    <p hidden id="currentPage">{{  .currentPage }}</p>
+    <p hidden id="totalPageCnt">{{  .totalPageCnt }}</p>
     <div class="container">
 
     {{ range .list }}
