@@ -9,5 +9,12 @@
     当前时间: {{date "Y-m-d H:i:s" .nowtime}} <!-- 自定义函数date -->
     <br>
     参数Id: {{.id}}
+    <title>上传文件</title>
+
+    <form enctype="multipart/form-data" action="http://192.168.110.133:9529/upload" method="post">
+        <input type="file" name="uploadfile" />
+        <input type="submit" value="上传" />
+    </form>
+
 </h3>
 {{end}}

@@ -11,6 +11,7 @@ import (
 	"github.com/hq-cml/spider-face/core"
 	"github.com/hq-cml/spider-face"
 	"time"
+	"fmt"
 )
 
 func main() {
@@ -22,6 +23,26 @@ func main() {
 		rp.Assign("id", rp.Param("id"))              //接收一个参数，然后传给模板
 
 		rp.Display("index")                           //渲染展示index.html模板
+	})
+
+	spd.POST("/upload", func(rp core.Roundtrip) {       //展示一个页面（基于模板文件）
+		key := "uploadfile"
+		mHeaders, err := rp.GetUploadFiles(key)
+		if err != nil {
+			rp.Echo("Some thing wrong!")
+		}
+
+		rp.Echo(fmt.Sprintf("成功上传文件个数：%d", len(mHeaders)))
+		rp.Echo("<Br>")
+		header := mHeaders[0]
+		rp.Echo("文件名称：")
+		rp.Echo(header.Filename)
+		rp.Echo("<Br>")
+		//rp.Echo("文件大小：")
+		//rp.Echo(fmt.Sprintf("%d", rp.GetFileSize(header)))
+
+		rp.MoveUploadFile(key, "/data/share/"+header.Filename)
+		rp.Echo("上传完成")
 	})
 
 	//Run
