@@ -5,6 +5,11 @@ import (
 	"net/http"
 )
 
+/*
+ * 往返句柄，每次request到来，都会动态生成一个roundtrip实例
+ * 通过这个实例来控制逻辑处理、输入、输出。它作为处理函数的抓手。
+ * 这个接口的功能类似于Echo（github.com/labstack/echo）框架的context的概念
+ */
 type Roundtrip interface {
 	initRoundtrip(request *Request, response *Response, controllerName, actionName string, logger SpiderLogger) bool
 	GetControllerName() string
@@ -20,7 +25,7 @@ type Roundtrip interface {
 	UrlPath() string
 	GetClientIP() string
 	Scheme() string
-	Header(key string) string
+	GetHeader(key string) string
 	SetHeader(key, value string)
 	SetCookie(name string, value string, others ...interface{})
 	Echo(content string)
@@ -37,8 +42,7 @@ type Roundtrip interface {
 	GetFileSize(file *multipart.File) int64
 }
 
-//实时controller，每次请求到来，都会动态生成一个controller实例
-//通过这个实例来控制逻辑处理、输入、输出
+//实现Roundtrip接口
 //这个结构将会嵌入到所有的用户定制Controller对象中去
 type SpiderRoundtrip struct {
 	request  *Request
@@ -49,6 +53,7 @@ type SpiderRoundtrip struct {
 	actionName     string
 }
 
+//初始化
 func (rp *SpiderRoundtrip) initRoundtrip(request *Request, response *Response,
 	controllerName, actionName string, logger SpiderLogger) bool {
 	rp.request = request
@@ -76,6 +81,7 @@ func (rp *SpiderRoundtrip) GetActionName() string {
 	return rp.actionName
 }
 
+//获取参数，同时兼容Post和Get参数
 func (rp *SpiderRoundtrip) Param(key string, defaultValue ...string) string {
 	v := rp.request.FindParam(key)
 	if v == "" && defaultValue != nil {
@@ -132,7 +138,7 @@ func (rp *SpiderRoundtrip) Scheme() string {
 	return rp.request.Scheme()
 }
 
-func (rp *SpiderRoundtrip) Header(key string) string {
+func (rp *SpiderRoundtrip) GetHeader(key string) string {
 	return rp.request.GetHeader(key)
 }
 
@@ -144,19 +150,23 @@ func (rp *SpiderRoundtrip) SetCookie(name string, value string, others ...interf
 	rp.response.SetCookie(name, value, others...)
 }
 
+//直接输出字符串
 func (rp *SpiderRoundtrip) Echo(content string) {
 	rp.OutputBytes([]byte(content))
 }
 
+//输出[]byte
 func (rp *SpiderRoundtrip) OutputBytes(bytes []byte) {
 	rp.response.SetHeader("Content-Type", "text/html; charset=utf-8")
 	rp.response.WriteBody(bytes)
 }
 
+//输出json
 func (rp *SpiderRoundtrip) OutputJson(data interface{}, coding ...bool) error {
 	return rp.response.Json(data, coding...)
 }
 
+//输出jsonp，用于支持跨域
 func (rp *SpiderRoundtrip) OutputJsonp(callback string, data interface{}, coding ...bool) error {
 	return rp.response.Jsonp(callback, data, coding...)
 }
