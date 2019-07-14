@@ -181,13 +181,3 @@ func (spd *Spider) PUT(location string , acFunc core.ActionFunc) {
 func (spd *Spider) DELETE(location string , acFunc core.ActionFunc) {
 	spd.MuxHander.SpeedyController.DELETE(location, acFunc)
 }
-
-//TODO
-//文件上传 ??
-//rewrite ??
-//自定制listenner ??
-//压缩 ??
-//https ??
-//热重启??
-//优雅退出Shutdown + context
-//MIME??

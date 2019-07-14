@@ -122,7 +122,7 @@ type Roundtrip interface {
 	UrlPath() string
 	GetClientIP() string
 	Scheme() string
-	Header(key string) string
+	GetHeader(key string) string
 	SetHeader(key, value string)
 	SetCookie(name string, value string, others ...interface{})
 	Echo(content string)
@@ -253,9 +253,7 @@ sConfig.CustomRewriteRule = map[string]string {
 
 ### TODO
 * 参数绑定，即对于传入的结构化的post参数，直接映射到一个类实例
-* 插件功能
-* 支持热升级:不中断服务重启server(抄袭beego ^_^)
+* 插件功能，参考Echo
 * 支持自定义路由
-* 支持https
 * 支持gzip/deflate压缩
 * 支持静态文件
