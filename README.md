@@ -47,5 +47,8 @@ $ go run main.go
 用浏览器访问 http://localhost:9529/index  
 就能看到熟悉的， Hello World!
 
+### 开发文档
+[文档](./design.md)
+
 ### Demos
 [demos](./demos)
