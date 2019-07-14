@@ -14,9 +14,13 @@ type SpiderConfig struct {
 	CustomHttpErrorHtml map[int]string    //定制化的错误页面 httpCode => customErr.html
 	CustomRewriteRule   map[string]string
 
-	Mime                bool    //配置Mime
-	Gzip                bool    //开启gzip压缩，默认对：.css、.js、.html、.jpg、.png进行压缩
-	CustomGzipExt       string  //用户自己指定的压缩文件后缀，用|分隔
+	Mime                bool    		  //配置Mime
+	Gzip                bool              //开启gzip压缩，默认对：.css、.js、.html、.jpg、.png进行压缩
+	CustomGzipExt       string            //用户自己指定的压缩文件后缀，用|分隔
+
+	HttpsOn             bool              //是否开启Https
+	CertFile            string            //证书
+	KeyFile             string            //公钥
 }
 
 type SpiderLogger interface {

@@ -199,7 +199,6 @@ func (rp *SpiderRoundtrip) Redirect(url string, code ...int) {
 	}
 }
 
-//TODO
 //获取上传文件
 func (rp *SpiderRoundtrip) GetUploadFiles(key string) ([]*multipart.FileHeader, error) {
 	return rp.request.GetUploadFiles(key)

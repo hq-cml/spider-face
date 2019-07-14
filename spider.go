@@ -133,7 +133,14 @@ func (spd *Spider) Run() {
 
 	//listen loop
 	spd.logger.Infof("Spider start to run...")
-	spd.HttpServer.ListenAndServe()
+	if spd.Config.HttpsOn {
+		if spd.Config.CertFile == "" || spd.Config.KeyFile == "" {
+			panic("Https Need cert & key")
+		}
+		spd.HttpServer.ListenAndServeTLS(spd.Config.CertFile, spd.Config.KeyFile)
+	} else {
+		spd.HttpServer.ListenAndServe()
+	}
 
 	spd.logger.Infof("The Http Server is Closed!")
 	spd.logger.Info("Bye Bye~")
