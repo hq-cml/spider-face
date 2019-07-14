@@ -19,6 +19,9 @@ func main() {
 	spd := spider.NewSpider(&core.SpiderConfig{         //生成Spider实例
 		BindAddr: ":9529",    						    //监听地址:端口
 		Gzip:true,                                      //静态文件压缩
+		HttpsOn: true,
+		CertFile: "/data/share/golang/src/github.com/hq-cml/spider-face/demos/common-html/cert/cert.pem",
+		KeyFile: "/data/share/golang/src/github.com/hq-cml/spider-face/demos/common-html/cert/key.pem",
 		//CustomGzipExt:"js|html",
 	}, nil)
 
