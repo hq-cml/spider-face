@@ -19,8 +19,8 @@ type SpiderConfig struct {
 	CustomGzipExt       string            //用户自己指定的压缩文件后缀，用|分隔
 
 	HttpsOn             bool              //是否开启Https
-	CertFile            string            //证书
-	KeyFile             string            //公钥
+	CertFile            string            //证书（公钥）
+	KeyFile             string            //私钥
 }
 
 type SpiderLogger interface {
