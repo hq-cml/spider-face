@@ -255,5 +255,3 @@ sConfig.CustomRewriteRule = map[string]string {
 * 参数绑定，即对于传入的结构化的post参数，直接映射到一个类实例
 * 插件功能，参考Echo
 * 支持自定义路由
-* 支持gzip/deflate压缩
-* 支持静态文件
