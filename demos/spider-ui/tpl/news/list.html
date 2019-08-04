@@ -1,4 +1,4 @@
-{{ define "weibo/list" }}
+{{ define "news/list" }}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -38,10 +38,10 @@
     {{ range .list }}
         <div class="panel panel-default">
             <div class="panel-heading">
-                <span class="lead"> <i class="fa fa-comment-o"></i> {{ .Summary }}</span>
+                <span class="lead"> <i class="fa fa-comment-o"></i> {{ .Title }}</span>
             </div>
             <div class="panel-body">
-                Started by {{ .User }} -  - {{ date "Y-m-d H:i:s" .CreatedAt }} -  - {{ .ReadCnt }}次阅读.
+                Started by - {{ date "Y-m-d H:i:s" .CreatedAt }} - 地址： - {{ .Url }}.
                 <div class="pull-right">
                     <a href="/_detail?id={{.Id }}">Read more</a>
                 </div>

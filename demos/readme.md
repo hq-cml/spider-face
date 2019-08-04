@@ -52,7 +52,8 @@
 * 复杂的模板使用渲染
 
 ### spider-ui
-这是[Spider-Engine](https://github.com/hq-cml/spider-engine)项目的配套页面，spider-engine是一个简单的搜索引擎，当数据导入索引之后，需要有一个类似于百度的首页查询页面~
+这是[Spider-Engine](https://github.com/hq-cml/spider-engine)项目的配套页面。  
+spider-engine是一个简单的搜索引擎，当数据导入索引之后，需要有一个类似于百度的首页查询页面~
 
 spider-ui就实现了这样的功能。具体演示了如下的功能：  
 

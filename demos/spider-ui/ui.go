@@ -14,7 +14,7 @@ func main() {
 	}, nil)
 
 	//创建issue controller，并绑定路由
-	wc := controllers.NewWeiboController()
+	wc := controllers.NewNewsController()
 	wc.SetRouteEntries([]core.RouteEntry{
 		{Method: http.MethodGet,  Location: "/",      		 Action:"IndexAction",},
 		{Method: http.MethodGet,  Location: "/index", 		 Action:"IndexAction",},
@@ -24,7 +24,7 @@ func main() {
 
 	controllers.SpiderEngineAddr = "192.168.110.133:9528"
 	controllers.SpiderEngineDb = "sp_db"
-	controllers.SpiderEngineTable = "weibo"
+	controllers.SpiderEngineTable = "360news"
 
 	//注册controller
 	if err := spd.RegisterController([]core.Controller{

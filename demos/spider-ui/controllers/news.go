@@ -18,36 +18,36 @@ var SpiderEngineTable string
 
 //创建标准的Controller，必须以Controller后缀结尾
 //并实现core.Controller接口
-type WeiboController struct {
+type NewsController struct {
 
 	spdrp core.SpiderRoundtrip
 	entries []core.RouteEntry
 }
-func (ic *WeiboController) GetAllRouters() []core.RouteEntry {
+func (ic *NewsController) GetAllRouters() []core.RouteEntry {
 	return ic.entries
 }
-func (ic *WeiboController) GetRoundTrip() core.Roundtrip {
+func (ic *NewsController) GetRoundTrip() core.Roundtrip {
 	return &ic.spdrp
 }
 
 //创建一个controller
-func NewWeiboController() *WeiboController {
-	hc := &WeiboController{}
+func NewNewsController() *NewsController {
+	hc := &NewsController{}
 	return hc
 }
 
 //设置路由规则
-func (ic *WeiboController) SetRouteEntries(entries []core.RouteEntry) {
+func (ic *NewsController) SetRouteEntries(entries []core.RouteEntry) {
 	ic.entries = entries
 }
 
 //首页展示
-func (ic *WeiboController) IndexAction(rp core.Roundtrip) {
-	rp.Display("weibo/index")
+func (ic *NewsController) IndexAction(rp core.Roundtrip) {
+	rp.Display("news/index")
 }
 
 //搜索接口
-func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
+func (ic *NewsController) SearchAction(rp core.Roundtrip) {
 	keyword := rp.Param("keyword")
 	p := rp.Param("page")
 	page := 1
@@ -96,11 +96,11 @@ func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
 	list := []Detail{}
 	for _, d := range r.Data.Docs {
 		if len([]rune(d.Detail.Content)) > 20 {
-			d.Detail.Summary = string([]rune(d.Detail.Content)[0: 20]) + "。。。"
+			d.Detail.Content = string([]rune(d.Detail.Content)[0: 20]) + "。。。"
 		} else {
-			d.Detail.Summary = d.Detail.Content
+			d.Detail.Content = d.Detail.Content
 		}
-		d.Detail.CreatedAt = time.Unix(d.Detail.Date, 0)
+		d.Detail.CreatedAt = time.Unix(d.Detail.Time, 0)
 		list = append(list, d.Detail)
 	}
 
@@ -108,7 +108,7 @@ func (ic *WeiboController) SearchAction(rp core.Roundtrip) {
 	rp.Assign("currentPage", page)
 	rp.Assign("totalPageCnt", int(r.Data.Total/size))
 
-	rp.Display("weibo/list")
+	rp.Display("news/list")
 }
 
 type Result struct {
@@ -126,17 +126,17 @@ type DocInfo struct {
 }
 
 type Detail struct {
-	Date 		int64  `json:"date"`
-	ReadCnt 	int64  `json:"read_cnt"`
-	User 		string `json:"user_name"`
-	Content 	string `json:"weibo_content"`
-	Id 			string `json:"weibo_id"`
-	Summary     string
-	CreatedAt   time.Time
+	Time 		int64  `json:"time"`
+	Title 		string `json:"title"`
+	Content 	string `json:"content"`
+	Id 			string `json:"id"`
+	Url     string		`json:"url"`
+	Charset   string 	`json:"charset"`
+	CreatedAt time.Time
 }
 
 //详情接口
-func (ic *WeiboController) DetailAction(rp core.Roundtrip) {
+func (ic *NewsController) DetailAction(rp core.Roundtrip) {
 	id := rp.Param("id")
 
 	//创建自定义的client进行搜索
@@ -163,10 +163,10 @@ func (ic *WeiboController) DetailAction(rp core.Roundtrip) {
 		return
 	}
 
-	r.Data.Detail.CreatedAt = time.Unix(r.Data.Detail.Date, 0)
+	r.Data.Detail.CreatedAt = time.Unix(r.Data.Detail.Time, 0)
 	rp.Assign("detail", r.Data.Detail)
 
-	rp.Display("weibo/detail")
+	rp.Display("news/detail")
 
 }
 
