@@ -106,6 +106,7 @@ func (ic *NewsController) SearchAction(rp core.Roundtrip) {
 
 	rp.Assign("list", list)
 	rp.Assign("currentPage", page)
+	rp.Assign("keyword", keyword)
 	rp.Assign("totalPageCnt", int(r.Data.Total/size))
 
 	rp.Display("news/list")
