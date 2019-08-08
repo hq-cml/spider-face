@@ -2,7 +2,7 @@
 
 # 一个简单的web框架
 Spider-Face是一个基于golang实现的web开发框架。  
-初衷是我想给我的迷你搜索引擎 [Spider-Engine](https://github.com/hq-cml/spider-engine) 开发一套Web界面，后来索性就把它也抽象独立成了一套web框架了。
+初衷是我想给 [Spider-Engine](https://github.com/hq-cml/spider-engine) （一个Go的小型搜索引擎）和 [Spider-Man](https://github.com/hq-cml/spider-engine) （一个Go的爬虫框架） 搭配一套Web界面，后来索性就把它也抽象独立成了一套web框架了。
 
 Spider-Face的目标是让golang的web开发更加简单！详细的使用方式，见：[开发文档](./design.md)
 
@@ -47,8 +47,3 @@ $ go run main.go
 用浏览器访问 http://localhost:9529/index  
 就能看到熟悉的， Hello World!
 
-### 开发文档
-[文档](./design.md)
-
-### Demos
-[demos](./demos)
